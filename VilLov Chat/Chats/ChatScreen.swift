@@ -47,6 +47,9 @@ struct ChatScreen: View {
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .navigationTitle(conversation.title)
+        .onAppear {
+            isInputFocused = true
+        }
     }
 
     private var messageComposer: some View {
@@ -54,11 +57,12 @@ struct ChatScreen: View {
             TextField("Message", text: $messageText, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .lineLimit(1...4)
+                .focused($isInputFocused)
                 .submitLabel(.send)
                 .onSubmit {
                     sendMessage()
                 }
-                .focused($isInputFocused)
+        
 
             Button {
                 sendMessage()
