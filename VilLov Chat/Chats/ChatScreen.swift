@@ -33,11 +33,16 @@ struct ChatScreen: View {
                     .padding()
                 }
                 .onChange(of: messages.count) {
-                    if let last = messages.last {
-                        withAnimation {
-                            proxy.scrollTo(last.id, anchor: .bottom)
-                        }
+                    guard let lastMessage = messages.last else { return }
+
+                    withAnimation {
+                        proxy.scrollTo(lastMessage.id, anchor: .bottom)
                     }
+                }
+                .onAppear {
+                    guard let lastMessage = messages.last else { return }
+
+                    proxy.scrollTo(lastMessage.id, anchor: .bottom)
                 }
             }
 
