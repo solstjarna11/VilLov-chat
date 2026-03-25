@@ -29,6 +29,10 @@ struct ContactRow: View {
                     VerificationBadge(isVerified: contact.isVerified)
                         .font(.caption)
                 }
+
+                Text(contact.isVerified ? "Verified contact" : "Unverified contact")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
