@@ -29,7 +29,7 @@ struct NewConversationScreen: View {
                         lastMessagePreview: "",
                         lastActivity: Date(),
                         unreadCount: 0,
-                        trustState: contact.isVerified ? .verified : .unverified,
+                        trustState: contact.trustState,
                         disappearingEnabled: false
                     )
                 )
