@@ -17,12 +17,23 @@ final class ChatViewModel: ObservableObject {
 
     let conversation: Conversation
 
+    private let provider: MessageProviding
+
+    init(conversation: Conversation) {
+        let provider = AppProviders.messages
+        self.conversation = conversation
+        self.provider = provider
+        self.messages = provider.loadMessages(for: conversation)
+    }
+
     init(
         conversation: Conversation,
+        provider: MessageProviding,
         messages: [Message]? = nil
     ) {
         self.conversation = conversation
-        self.messages = messages ?? Message.mockMessages
+        self.provider = provider
+        self.messages = messages ?? provider.loadMessages(for: conversation)
     }
 
     var trimmedMessageText: String {

@@ -14,8 +14,20 @@ import Combine
 final class LinkedDevicesViewModel: ObservableObject {
     @Published private(set) var devices: [Device]
 
-    init(devices: [Device]? = nil) {
-        self.devices = devices ?? Device.mockData
+    private let provider: DeviceProviding
+
+    init() {
+        let provider = AppProviders.devices
+        self.provider = provider
+        self.devices = provider.loadDevices()
+    }
+
+    init(
+        provider: DeviceProviding,
+        devices: [Device]? = nil
+    ) {
+        self.provider = provider
+        self.devices = devices ?? provider.loadDevices()
     }
 
     var currentDevice: Device? {

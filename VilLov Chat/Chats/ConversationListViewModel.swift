@@ -15,8 +15,20 @@ final class ConversationListViewModel: ObservableObject {
     @Published var searchText = ""
     @Published private(set) var conversations: [Conversation]
 
-    init(conversations: [Conversation]? = nil) {
-        self.conversations = conversations ?? Conversation.mockData
+    private let provider: ConversationProviding
+
+    init() {
+        let provider = AppProviders.conversations
+        self.provider = provider
+        self.conversations = provider.loadConversations()
+    }
+
+    init(
+        provider: ConversationProviding,
+        conversations: [Conversation]? = nil
+    ) {
+        self.provider = provider
+        self.conversations = conversations ?? provider.loadConversations()
     }
 
     var filteredConversations: [Conversation] {

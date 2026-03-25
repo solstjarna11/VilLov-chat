@@ -15,8 +15,20 @@ final class NewConversationViewModel: ObservableObject {
     @Published var searchText = ""
     @Published private(set) var contacts: [Contact]
 
-    init(contacts: [Contact]? = nil) {
-        self.contacts = contacts ?? Contact.mockData
+    private let provider: ContactProviding
+
+    init() {
+        let provider = AppProviders.contacts
+        self.provider = provider
+        self.contacts = provider.loadContacts()
+    }
+
+    init(
+        provider: ContactProviding,
+        contacts: [Contact]? = nil
+    ) {
+        self.provider = provider
+        self.contacts = contacts ?? provider.loadContacts()
     }
 
     var filteredContacts: [Contact] {
