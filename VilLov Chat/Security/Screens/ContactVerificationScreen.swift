@@ -6,6 +6,13 @@
 //
 
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
+
+#if os(iOS)
+import UIKit
+#endif
 
 struct ContactVerificationScreen: View {
     let conversation: Conversation
@@ -78,9 +85,7 @@ struct ContactVerificationScreen: View {
                 .font(.system(.body, design: .monospaced))
 
             Button("Copy Safety Number") {
-                #if canImport(UIKit)
-                UIPasteboard.general.string = verificationData.safetyNumber
-                #endif
+                copySafetyNumberToClipboard()
             }
             .buttonStyle(.bordered)
         }
@@ -102,6 +107,15 @@ struct ContactVerificationScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+    
+    private func copySafetyNumberToClipboard() {
+        #if os(iOS)
+        UIPasteboard.general.string = verificationData.safetyNumber
+        #elseif os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(verificationData.safetyNumber, forType: .string)
+        #endif
     }
 }
 private struct InlineNavigationBarTitleDisplayMode: ViewModifier {

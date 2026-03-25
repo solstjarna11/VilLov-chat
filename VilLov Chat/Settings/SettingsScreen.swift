@@ -11,7 +11,18 @@ struct SettingsScreen: View {
     var body: some View {
         NavigationStack {
             List {
-                Text("Settings will appear here")
+                Section("Account") {
+                    Button("Profile") {}
+                    Button("Sign Out") {}
+                }
+                Section("Privacy") {
+                    Button("Blocked Contacts") {}
+                    Button("Data & Storage") {}
+                }
+                Section("About") {
+                    Button("Licenses") {}
+                    Button("Version") {}
+                }
             }
             .navigationTitle("Settings")
         }
