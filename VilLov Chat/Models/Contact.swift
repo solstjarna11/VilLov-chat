@@ -11,5 +11,9 @@ import Foundation
 struct Contact: Identifiable, Hashable {
     let id: UUID
     let name: String
-    let isVerified: Bool
+    let trustState: ContactTrustState
+
+    var isVerified: Bool {
+        trustState == .verified
+    }
 }

@@ -13,6 +13,10 @@ struct Conversation: Identifiable, Hashable {
     let lastMessagePreview: String
     let lastActivity: Date
     let unreadCount: Int
-    let isVerified: Bool
+    let trustState: ContactTrustState
+
+    var isVerified: Bool {
+        trustState == .verified
+    }
     let disappearingEnabled: Bool
 }

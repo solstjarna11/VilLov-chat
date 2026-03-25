@@ -15,7 +15,7 @@ extension Conversation {
             lastMessagePreview: "I reviewed the latest security notes.",
             lastActivity: Date(),
             unreadCount: 2,
-            isVerified: true,
+            trustState: .verified,
             disappearingEnabled: true
         ),
         Conversation(
@@ -24,7 +24,7 @@ extension Conversation {
             lastMessagePreview: "Let’s finalize device linking tomorrow.",
             lastActivity: Date().addingTimeInterval(-3600),
             unreadCount: 0,
-            isVerified: false,
+            trustState:.unverified,
             disappearingEnabled: false
         ),
         Conversation(
@@ -33,7 +33,7 @@ extension Conversation {
             lastMessagePreview: "The updated architecture diagram looks good.",
             lastActivity: Date().addingTimeInterval(-7200),
             unreadCount: 5,
-            isVerified: true,
+            trustState: .verified,
             disappearingEnabled: false
         )
     ]
