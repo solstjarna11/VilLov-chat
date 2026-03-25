@@ -33,6 +33,13 @@ struct RootView: View {
         // - later check device registration / passkey state
         //
         // For now, keep the state decision centralized here.
+        #if DEBUG
+        if AppEnvironment.isDevelopmentAuthBypassEnabled {
+            appState = AppEnvironment.initialAppState
+            return
+        }
+        #endif
+
         appState = .unauthenticated
     }
 }
