@@ -1,17 +1,7 @@
-//
-//  SettingsScreen.swift
-//  VilLov Chat
-//
-//  Created by Lovísa Sól on 25.3.2026.
-//
-
 import SwiftUI
 
 struct SettingsScreen: View {
-    @State private var notificationsEnabled = true
-    @State private var biometricsEnabled = true
-    @State private var linkPreviewsEnabled = false
-    @State private var readReceiptsEnabled = true
+    @StateObject private var viewModel = SettingsViewModel()
 
     var body: some View {
         NavigationStack {
@@ -48,14 +38,14 @@ struct SettingsScreen: View {
                 SettingsRow(title: "Security Overview", systemImage: "checkmark.shield")
             }
 
-            Toggle("Use Biometrics / Device Unlock", isOn: $biometricsEnabled)
+            Toggle("Use Biometrics / Device Unlock", isOn: $viewModel.biometricsEnabled)
         }
     }
 
     private var privacySection: some View {
         Section("Privacy") {
-            Toggle("Read Receipts", isOn: $readReceiptsEnabled)
-            Toggle("Link Previews", isOn: $linkPreviewsEnabled)
+            Toggle("Read Receipts", isOn: $viewModel.readReceiptsEnabled)
+            Toggle("Link Previews", isOn: $viewModel.linkPreviewsEnabled)
 
             NavigationLink {
                 RecoveryPlaceholderScreen()
@@ -67,7 +57,7 @@ struct SettingsScreen: View {
 
     private var notificationsSection: some View {
         Section("Notifications") {
-            Toggle("Enable Notifications", isOn: $notificationsEnabled)
+            Toggle("Enable Notifications", isOn: $viewModel.notificationsEnabled)
         }
     }
 
@@ -84,6 +74,7 @@ struct SettingsScreen: View {
         }
     }
 }
+
 #Preview {
     SettingsScreen()
 }

@@ -8,45 +8,37 @@
 import SwiftUI
 
 struct LinkedDevicesScreen: View {
-    @State private var devices: [Device] = Device.mockData
-
-    private var currentDevice: Device? {
-        devices.first(where: { $0.isCurrentDevice })
-    }
-
-    private var linkedDevices: [Device] {
-        devices.filter { !$0.isCurrentDevice }
-    }
+    @StateObject private var viewModel = LinkedDevicesViewModel()
 
     var body: some View {
         NavigationStack {
             List {
-                if let currentDevice {
+                if let currentDevice = viewModel.currentDevice {
                     Section("Current Device") {
                         DeviceRow(device: currentDevice)
                     }
                 }
 
                 Section("Linked Devices") {
-                    if linkedDevices.isEmpty {
+                    if !viewModel.hasLinkedDevices {
                         Text("No additional linked devices.")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(linkedDevices) { device in
+                        ForEach(viewModel.linkedDevices) { device in
                             HStack {
                                 DeviceRow(device: device)
 
                                 Spacer()
 
                                 Button(role: .destructive) {
-                                    removeLinkedDevice(device)
+                                    viewModel.removeLinkedDevice(device)
                                 } label: {
                                     Label("Remove", systemImage: "trash")
                                 }
                                 .buttonStyle(.borderless)
                             }
                         }
-                        .onDelete(perform: removeLinkedDevices)
+                        .onDelete(perform: viewModel.removeLinkedDevices)
                     }
                 }
 
@@ -71,16 +63,10 @@ struct LinkedDevicesScreen: View {
                 .foregroundStyle(.secondary)
             }
             .navigationTitle("Devices")
-        
         }
     }
+}
 
-    private func removeLinkedDevices(at offsets: IndexSet) {
-        let removableDevices = linkedDevices
-        let idsToRemove = offsets.map { removableDevices[$0].id }
-        devices.removeAll { idsToRemove.contains($0.id) }
-    }
-    private func removeLinkedDevice(_ device: Device) {
-        devices.removeAll { $0.id == device.id }
-    }
+#Preview {
+    LinkedDevicesScreen()
 }
