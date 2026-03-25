@@ -26,18 +26,23 @@ struct WelcomeScreen: View {
                 }
 
                 VStack(spacing: 12) {
-                    Button("Create Account") {
-                        // navigate to registration/passkey setup flow
+                    NavigationLink {
+                        CreateAccountScreen()
+                    } label: {
+                        Text("Create Account")
+                            .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
-                    .frame(maxWidth: .infinity)
 
-                    Button("Sign In") {
-                        // navigate to authentication flow
+                    NavigationLink {
+                        SignInScreen()
+                    } label: {
+                        Text("Sign In")
+                            .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
-                    .frame(maxWidth: .infinity)
                 }
+                .frame(maxWidth: 280)
                 .padding(.horizontal)
 
                 Spacer()
