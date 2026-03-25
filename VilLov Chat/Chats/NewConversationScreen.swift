@@ -8,47 +8,22 @@
 import SwiftUI
 
 struct NewConversationScreen: View {
-    @State private var searchText = ""
-    @State private var contacts = Contact.mockData
-
-    private var filteredContacts: [Contact] {
-        let trimmedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard !trimmedSearchText.isEmpty else {
-            return contacts
-        }
-
-        return contacts.filter {
-            $0.name.localizedCaseInsensitiveContains(trimmedSearchText)
-        }
-    }
-
-    private var verifiedContacts: [Contact] {
-        filteredContacts.filter { $0.trustState == .verified }
-    }
-
-    private var otherContacts: [Contact] {
-        filteredContacts.filter { $0.trustState != .verified }
-    }
-
-    private var hasResults: Bool {
-        !filteredContacts.isEmpty
-    }
+    @StateObject private var viewModel = NewConversationViewModel()
 
     var body: some View {
         List {
-            if hasResults {
-                if !verifiedContacts.isEmpty {
+            if viewModel.hasResults {
+                if !viewModel.verifiedContacts.isEmpty {
                     Section("Verified") {
-                        ForEach(verifiedContacts) { contact in
+                        ForEach(viewModel.verifiedContacts) { contact in
                             contactNavigationLink(for: contact)
                         }
                     }
                 }
 
-                if !otherContacts.isEmpty {
+                if !viewModel.otherContacts.isEmpty {
                     Section("Other Contacts") {
-                        ForEach(otherContacts) { contact in
+                        ForEach(viewModel.otherContacts) { contact in
                             contactNavigationLink(for: contact)
                         }
                     }
@@ -56,9 +31,9 @@ struct NewConversationScreen: View {
             }
         }
         .navigationTitle("New Conversation")
-        .searchable(text: $searchText, prompt: "Search contacts")
+        .searchable(text: $viewModel.searchText, prompt: "Search contacts")
         .overlay {
-            if !hasResults {
+            if !viewModel.hasResults {
                 ContentUnavailableView(
                     "No Contacts Found",
                     systemImage: "person.crop.circle.badge.exclamationmark",
@@ -71,22 +46,10 @@ struct NewConversationScreen: View {
     @ViewBuilder
     private func contactNavigationLink(for contact: Contact) -> some View {
         NavigationLink {
-            ChatScreen(conversation: makeConversation(from: contact))
+            ChatScreen(conversation: viewModel.makeConversation(from: contact))
         } label: {
             ContactRow(contact: contact)
         }
-    }
-
-    private func makeConversation(from contact: Contact) -> Conversation {
-        Conversation(
-            id: UUID(),
-            title: contact.name,
-            lastMessagePreview: "",
-            lastActivity: Date(),
-            unreadCount: 0,
-            trustState: contact.trustState,
-            disappearingEnabled: false
-        )
     }
 }
 
@@ -95,4 +58,3 @@ struct NewConversationScreen: View {
         NewConversationScreen()
     }
 }
-
