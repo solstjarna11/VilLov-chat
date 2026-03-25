@@ -55,6 +55,37 @@ struct ChatScreen: View {
         .onAppear {
             isInputFocused = true
         }
+        .toolbar {
+#if os(macOS)
+            ToolbarItem(placement: .automatic) {
+                NavigationLink {
+                    ConversationSecurityScreen(conversation: conversation)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: conversation.isVerified ? "checkmark.shield.fill" : "exclamationmark.shield")
+                        if conversation.disappearingEnabled {
+                            Image(systemName: "timer")
+                        }
+                    }
+                }
+                .accessibilityLabel("Conversation Security")
+            }
+#else
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    ConversationSecurityScreen(conversation: conversation)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: conversation.isVerified ? "checkmark.shield.fill" : "exclamationmark.shield")
+                        if conversation.disappearingEnabled {
+                            Image(systemName: "timer")
+                        }
+                    }
+                }
+                .accessibilityLabel("Conversation Security")
+            }
+#endif
+        }
     }
 
     private var messageComposer: some View {
@@ -99,20 +130,30 @@ struct ChatScreen: View {
     }
 
     private var securityBanner: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label(
-                conversation.isVerified ? "Identity verified" : "Identity not verified",
-                systemImage: conversation.isVerified ? "checkmark.shield.fill" : "exclamationmark.shield"
-            )
-            .font(.headline)
+        NavigationLink {
+            ConversationSecurityScreen(conversation: conversation)
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                Label(
+                    conversation.isVerified ? "Identity verified" : "Identity not verified",
+                    systemImage: conversation.isVerified ? "checkmark.shield.fill" : "exclamationmark.shield"
+                )
+                .font(.headline)
 
-            if conversation.disappearingEnabled {
-                Label("Disappearing messages enabled", systemImage: "timer")
-                    .font(.subheadline)
+                if conversation.disappearingEnabled {
+                    Label("Disappearing messages enabled", systemImage: "timer")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Text("Open conversation security settings")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
         }
-        .padding()
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+        .buttonStyle(.plain)
     }
 }
