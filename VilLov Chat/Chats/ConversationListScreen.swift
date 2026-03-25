@@ -36,8 +36,8 @@ struct ConversationListScreen: View {
             .searchable(text: $searchText, prompt: "Search conversations")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        // connect to new conversation flow later
+                    NavigationLink {
+                        NewConversationScreen()
                     } label: {
                         Image(systemName: "square.and.pencil")
                     }
