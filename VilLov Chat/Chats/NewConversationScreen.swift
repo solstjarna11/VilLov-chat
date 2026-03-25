@@ -29,7 +29,7 @@ struct NewConversationScreen: View {
                         lastMessagePreview: "",
                         lastActivity: Date(),
                         unreadCount: 0,
-                        isVerified: contact.isVerified,
+                        trustState: contact.isVerified ? .verified : .unverified,
                         disappearingEnabled: false
                     )
                 )
@@ -41,3 +41,4 @@ struct NewConversationScreen: View {
         .searchable(text: $searchText, prompt: "Search contacts")
     }
 }
+
