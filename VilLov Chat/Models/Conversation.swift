@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Conversation: Identifiable {
+struct Conversation: Identifiable, Hashable {
     let id: UUID
     let title: String
     let lastMessagePreview: String
