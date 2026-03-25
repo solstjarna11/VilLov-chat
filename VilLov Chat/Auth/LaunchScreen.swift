@@ -10,7 +10,8 @@ import SwiftUI
 struct LaunchScreen: View {
     var body: some View {
         ZStack {
-            Color(.systemBackground)
+            Rectangle()
+                .fill(.background)
                 .ignoresSafeArea()
 
             VStack(spacing: 16) {
