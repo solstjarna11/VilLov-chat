@@ -8,39 +8,41 @@
 import SwiftUI
 
 struct ChatScreen: View {
-    let conversation: Conversation
-
-    @State private var messageText = ""
-    @State private var messages: [Message] = Message.mockMessages
+    @StateObject private var viewModel: ChatViewModel
     @FocusState private var isInputFocused: Bool
+
+    init(conversation: Conversation) {
+        _viewModel = StateObject(wrappedValue: ChatViewModel(conversation: conversation))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(spacing: 12) {
+                    LazyVStack(spacing: 0) {
                         securityBanner
 
-                        ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
-                            let previous = index > 0 ? messages[index - 1] : nil
+                        ForEach(Array(viewModel.messages.enumerated()), id: \.element.id) { index, message in
+                            let previous = index > 0 ? viewModel.messages[index - 1] : nil
 
                             MessageBubble(
                                 message: message,
                                 isGroupedWithPrevious: previous?.isIncoming == message.isIncoming
                             )
+                            .id(message.id)
                         }
                     }
                     .padding()
                 }
-                .onChange(of: messages.count) {
-                    guard let lastMessage = messages.last else { return }
+                .onChange(of: viewModel.messages.count) {
+                    guard let lastMessage = viewModel.messages.last else { return }
 
                     withAnimation {
                         proxy.scrollTo(lastMessage.id, anchor: .bottom)
                     }
                 }
                 .onAppear {
-                    guard let lastMessage = messages.last else { return }
+                    guard let lastMessage = viewModel.messages.last else { return }
 
                     proxy.scrollTo(lastMessage.id, anchor: .bottom)
                 }
@@ -51,94 +53,55 @@ struct ChatScreen: View {
             messageComposer
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
-        .navigationTitle(conversation.title)
-        .onAppear {
-            isInputFocused = true
-        }
+        .navigationTitle(viewModel.conversation.title)
         .toolbar {
-#if os(macOS)
-            ToolbarItem(placement: .automatic) {
-                NavigationLink {
-                    ConversationSecurityScreen(conversation: conversation)
-                } label: {
-                    HStack(spacing: 6) {
-                        VerificationBadge(isVerified: conversation.isVerified)
-
-                        if conversation.disappearingEnabled {
-                            Image(systemName: "timer")
-                        }
-                    }
-                }
-                .accessibilityLabel("Conversation Security")
-            }
-#else
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
-                    ConversationSecurityScreen(conversation: conversation)
+                    ConversationSecurityScreen(conversation: viewModel.conversation)
                 } label: {
                     HStack(spacing: 6) {
-                        VerificationBadge(isVerified: conversation.isVerified)
+                        VerificationBadge(isVerified: viewModel.conversation.isVerified)
 
-                        if conversation.disappearingEnabled {
+                        if viewModel.conversation.disappearingEnabled {
                             Image(systemName: "timer")
                         }
                     }
                 }
                 .accessibilityLabel("Conversation Security")
             }
-#endif
         }
     }
 
     private var messageComposer: some View {
         HStack(spacing: 12) {
-            TextField("Message", text: $messageText, axis: .vertical)
+            TextField("Message", text: $viewModel.messageText, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .lineLimit(1...4)
                 .focused($isInputFocused)
                 .submitLabel(.send)
                 .onSubmit {
-                    sendMessage()
+                    sendMessageAndRestoreFocus()
                 }
-        
 
             Button {
-                sendMessage()
+                sendMessageAndRestoreFocus()
             } label: {
                 Image(systemName: "paperplane.fill")
             }
             .buttonStyle(.borderedProminent)
-            .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(!viewModel.canSendMessage)
         }
         .padding()
     }
 
-    private func sendMessage() {
-        let trimmed = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        
-        let newMessage = Message(
-            id: UUID(),
-            text: trimmed,
-            isIncoming: false,
-            timestamp: Date(),
-            status: .sending
-        )
-
-        messages.append(newMessage)
-        messageText = ""
-
-        isInputFocused = true
-    }
-
     private var securityBanner: some View {
         NavigationLink {
-            ConversationSecurityScreen(conversation: conversation)
+            ConversationSecurityScreen(conversation: viewModel.conversation)
         } label: {
             VStack(alignment: .leading, spacing: 8) {
                 SecurityStatusBanner(
-                    isVerified: conversation.isVerified,
-                    disappearingMessagesEnabled: conversation.disappearingEnabled
+                    isVerified: viewModel.conversation.isVerified,
+                    disappearingMessagesEnabled: viewModel.conversation.disappearingEnabled
                 )
 
                 Text("Open conversation security settings")
@@ -147,5 +110,16 @@ struct ChatScreen: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private func sendMessageAndRestoreFocus() {
+        viewModel.sendMessage()
+        isInputFocused = true
+    }
+}
+
+#Preview {
+    NavigationStack {
+        ChatScreen(conversation: Conversation.mockData[0])
     }
 }
