@@ -8,23 +8,11 @@
 import SwiftUI
 
 struct ConversationListScreen: View {
-    @State private var searchText = ""
-    @State private var conversations: [Conversation] = Conversation.mockData
-
-    private var filteredConversations: [Conversation] {
-        guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return conversations
-        }
-
-        return conversations.filter {
-            $0.title.localizedCaseInsensitiveContains(searchText) ||
-            $0.lastMessagePreview.localizedCaseInsensitiveContains(searchText)
-        }
-    }
+    @StateObject private var viewModel = ConversationListViewModel()
 
     var body: some View {
         NavigationStack {
-            List(filteredConversations) { conversation in
+            List(viewModel.filteredConversations) { conversation in
                 NavigationLink {
                     ChatScreen(conversation: conversation)
                 } label: {
@@ -33,7 +21,7 @@ struct ConversationListScreen: View {
             }
             .listStyle(.inset)
             .navigationTitle("Chats")
-            .searchable(text: $searchText, prompt: "Search conversations")
+            .searchable(text: $viewModel.searchText, prompt: "Search conversations")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink {
@@ -45,7 +33,7 @@ struct ConversationListScreen: View {
                 }
             }
             .overlay {
-                if filteredConversations.isEmpty {
+                if !viewModel.hasResults {
                     ContentUnavailableView(
                         "No Conversations",
                         systemImage: "message",
@@ -55,4 +43,8 @@ struct ConversationListScreen: View {
             }
         }
     }
+}
+
+#Preview {
+    ConversationListScreen()
 }
