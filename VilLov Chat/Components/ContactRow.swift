@@ -26,10 +26,8 @@ struct ContactRow: View {
                     Text(contact.name)
                         .font(.body)
 
-                    if contact.isVerified {
-                        Image(systemName: "checkmark.shield.fill")
-                            .font(.caption)
-                    }
+                    VerificationBadge(isVerified: contact.isVerified)
+                        .font(.caption)
                 }
             }
 

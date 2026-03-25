@@ -62,7 +62,8 @@ struct ChatScreen: View {
                     ConversationSecurityScreen(conversation: conversation)
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: conversation.isVerified ? "checkmark.shield.fill" : "exclamationmark.shield")
+                        VerificationBadge(isVerified: conversation.isVerified)
+
                         if conversation.disappearingEnabled {
                             Image(systemName: "timer")
                         }
@@ -76,7 +77,8 @@ struct ChatScreen: View {
                     ConversationSecurityScreen(conversation: conversation)
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: conversation.isVerified ? "checkmark.shield.fill" : "exclamationmark.shield")
+                        VerificationBadge(isVerified: conversation.isVerified)
+
                         if conversation.disappearingEnabled {
                             Image(systemName: "timer")
                         }
@@ -134,25 +136,15 @@ struct ChatScreen: View {
             ConversationSecurityScreen(conversation: conversation)
         } label: {
             VStack(alignment: .leading, spacing: 8) {
-                Label(
-                    conversation.isVerified ? "Identity verified" : "Identity not verified",
-                    systemImage: conversation.isVerified ? "checkmark.shield.fill" : "exclamationmark.shield"
+                SecurityStatusBanner(
+                    isVerified: conversation.isVerified,
+                    disappearingMessagesEnabled: conversation.disappearingEnabled
                 )
-                .font(.headline)
-
-                if conversation.disappearingEnabled {
-                    Label("Disappearing messages enabled", systemImage: "timer")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
 
                 Text("Open conversation security settings")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }

@@ -20,10 +20,8 @@ struct ConversationRow: View {
                         .font(.headline)
                         .lineLimit(1)
 
-                    if conversation.isVerified {
-                        Image(systemName: "checkmark.shield.fill")
-                            .font(.caption)
-                    }
+                    VerificationBadge(isVerified: conversation.isVerified)
+                        .font(.caption)
 
                     if conversation.disappearingEnabled {
                         Image(systemName: "timer")
