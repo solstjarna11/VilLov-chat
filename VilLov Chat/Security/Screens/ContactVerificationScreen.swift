@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+
 #if os(macOS)
 import AppKit
 #endif
@@ -15,8 +16,16 @@ import UIKit
 #endif
 
 struct ContactVerificationScreen: View {
-    let conversation: Conversation
-    let verificationData: ContactVerificationViewData
+    @StateObject private var viewModel: ContactVerificationViewModel
+
+    init(conversation: Conversation, verificationData: ContactVerificationViewData) {
+        _viewModel = StateObject(
+            wrappedValue: ContactVerificationViewModel(
+                conversation: conversation,
+                verificationData: verificationData
+            )
+        )
+    }
 
     var body: some View {
         ScrollView {
@@ -29,14 +38,16 @@ struct ContactVerificationScreen: View {
             .padding()
         }
         .navigationTitle("Verify Contact")
-        .modifier(InlineNavigationBarTitleDisplayMode())
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 
     private var verificationStatusCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label(
-                verificationData.isVerified ? "This contact is verified" : "This contact is not verified",
-                systemImage: verificationData.isVerified ? "checkmark.shield.fill" : "exclamationmark.shield"
+                viewModel.statusTitle,
+                systemImage: viewModel.statusSystemImage
             )
             .font(.headline)
 
@@ -60,7 +71,7 @@ struct ContactVerificationScreen: View {
                             .font(.system(size: 56))
                         Text("QR Verification")
                             .font(.headline)
-                        Text(verificationData.qrCodeDescription)
+                        Text(viewModel.qrCodeDescription)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -81,11 +92,11 @@ struct ContactVerificationScreen: View {
             Text("Safety Number")
                 .font(.headline)
 
-            Text(verificationData.safetyNumber)
+            Text(viewModel.safetyNumber)
                 .font(.system(.body, design: .monospaced))
 
             Button("Copy Safety Number") {
-                copySafetyNumberToClipboard()
+                viewModel.copySafetyNumberToClipboard()
             }
             .buttonStyle(.bordered)
         }
@@ -108,23 +119,13 @@ struct ContactVerificationScreen: View {
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
-    
-    private func copySafetyNumberToClipboard() {
-        #if os(iOS)
-        UIPasteboard.general.string = verificationData.safetyNumber
-        #elseif os(macOS)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(verificationData.safetyNumber, forType: .string)
-        #endif
-    }
-}
-private struct InlineNavigationBarTitleDisplayMode: ViewModifier {
-    func body(content: Content) -> some View {
-        #if os(iOS)
-        content.navigationBarTitleDisplayMode(.inline)
-        #else
-        content
-        #endif
-    }
 }
 
+#Preview {
+    NavigationStack {
+        ContactVerificationScreen(
+            conversation: Conversation.mockData[0],
+            verificationData: MockContactVerificationData.verified
+        )
+    }
+}

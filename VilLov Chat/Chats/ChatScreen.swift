@@ -55,13 +55,13 @@ struct ChatScreen: View {
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .navigationTitle(viewModel.conversation.title)
         .toolbar {
+            #if os(iOS)
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     ConversationSecurityScreen(conversation: viewModel.conversation)
                 } label: {
                     HStack(spacing: 6) {
                         VerificationBadge(isVerified: viewModel.conversation.isVerified)
-
                         if viewModel.conversation.disappearingEnabled {
                             Image(systemName: "timer")
                         }
@@ -69,6 +69,21 @@ struct ChatScreen: View {
                 }
                 .accessibilityLabel("Conversation Security")
             }
+            #else
+            ToolbarItem(placement: .automatic) {
+                NavigationLink {
+                    ConversationSecurityScreen(conversation: viewModel.conversation)
+                } label: {
+                    HStack(spacing: 6) {
+                        VerificationBadge(isVerified: viewModel.conversation.isVerified)
+                        if viewModel.conversation.disappearingEnabled {
+                            Image(systemName: "timer")
+                        }
+                    }
+                }
+                .accessibilityLabel("Conversation Security")
+            }
+            #endif
         }
     }
 

@@ -8,13 +8,12 @@
 import SwiftUI
 
 struct ConversationSecurityScreen: View {
-    let conversation: Conversation
-    @State private var disappearingMessagesEnabled: Bool
-    @State private var selectedExpiration: MessageExpiration = .oneDay
+    @StateObject private var viewModel: ConversationSecurityViewModel
 
     init(conversation: Conversation) {
-        self.conversation = conversation
-        _disappearingMessagesEnabled = State(initialValue: conversation.disappearingEnabled)
+        _viewModel = StateObject(
+            wrappedValue: ConversationSecurityViewModel(conversation: conversation)
+        )
     }
 
     var body: some View {
@@ -22,8 +21,8 @@ struct ConversationSecurityScreen: View {
             Section("Verification") {
                 NavigationLink {
                     ContactVerificationScreen(
-                        conversation: conversation,
-                        verificationData: conversation.isVerified
+                        conversation: viewModel.conversation,
+                        verificationData: viewModel.conversation.isVerified
                             ? MockContactVerificationData.verified
                             : MockContactVerificationData.unverified
                     )
@@ -31,19 +30,17 @@ struct ConversationSecurityScreen: View {
                     HStack {
                         Label("Verify Contact", systemImage: "checkmark.shield")
                         Spacer()
-                        if conversation.isVerified {
-                            Text("Verified")
-                                .foregroundStyle(.secondary)
-                        }
+                        Text(viewModel.verificationStatusText)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
 
             Section("Disappearing Messages") {
-                Toggle("Enable Disappearing Messages", isOn: $disappearingMessagesEnabled)
+                Toggle("Enable Disappearing Messages", isOn: $viewModel.disappearingMessagesEnabled)
 
-                if disappearingMessagesEnabled {
-                    Picker("Expiration", selection: $selectedExpiration) {
+                if viewModel.disappearingMessagesEnabled {
+                    Picker("Expiration", selection: $viewModel.selectedExpiration) {
                         ForEach(MessageExpiration.allCases) { expiration in
                             Text(expiration.title).tag(expiration)
                         }
@@ -65,27 +62,5 @@ struct ConversationSecurityScreen: View {
 #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
 #endif
-    }
-}
-
-enum MessageExpiration: String, CaseIterable, Identifiable {
-    case thirtyMinutes
-    case oneHour
-    case oneDay
-    case oneWeek
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .thirtyMinutes:
-            return "30 Minutes"
-        case .oneHour:
-            return "1 Hour"
-        case .oneDay:
-            return "1 Day"
-        case .oneWeek:
-            return "1 Week"
-        }
     }
 }
