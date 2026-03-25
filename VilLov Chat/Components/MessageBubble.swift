@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MessageBubble: View {
     let message: Message
+    let isGroupedWithPrevious: Bool
 
     var body: some View {
         HStack {
@@ -20,6 +21,8 @@ struct MessageBubble: View {
                 bubble
             }
         }
+        .padding(.top, isGroupedWithPrevious ? 2 : 10)
+        .padding(.horizontal)
     }
 
     private var bubble: some View {

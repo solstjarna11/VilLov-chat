@@ -12,24 +12,40 @@ struct ChatScreen: View {
 
     @State private var messageText = ""
     @State private var messages: [Message] = Message.mockMessages
+    @FocusState private var isInputFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    securityBanner
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        securityBanner
 
-                    ForEach(messages) { message in
-                        MessageBubble(message: message)
+                        ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
+                            let previous = index > 0 ? messages[index - 1] : nil
+
+                            MessageBubble(
+                                message: message,
+                                isGroupedWithPrevious: previous?.isIncoming == message.isIncoming
+                            )
+                        }
+                    }
+                    .padding()
+                }
+                .onChange(of: messages.count) {
+                    if let last = messages.last {
+                        withAnimation {
+                            proxy.scrollTo(last.id, anchor: .bottom)
+                        }
                     }
                 }
-                .padding()
             }
 
             Divider()
 
             messageComposer
         }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .navigationTitle(conversation.title)
     }
 
@@ -38,6 +54,11 @@ struct ChatScreen: View {
             TextField("Message", text: $messageText, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .lineLimit(1...4)
+                .submitLabel(.send)
+                .onSubmit {
+                    sendMessage()
+                }
+                .focused($isInputFocused)
 
             Button {
                 sendMessage()
@@ -51,9 +72,12 @@ struct ChatScreen: View {
     }
 
     private func sendMessage() {
+        let trimmed = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
         let newMessage = Message(
             id: UUID(),
-            text: messageText,
+            text: trimmed,
             isIncoming: false,
             timestamp: Date(),
             status: .sending
@@ -61,6 +85,8 @@ struct ChatScreen: View {
 
         messages.append(newMessage)
         messageText = ""
+
+        isInputFocused = true
     }
 
     private var securityBanner: some View {
