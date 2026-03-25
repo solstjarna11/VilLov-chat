@@ -62,7 +62,9 @@ struct ConversationSecurityScreen: View {
             }
         }
         .navigationTitle("Conversation Security")
+#if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+#endif
     }
 }
 
