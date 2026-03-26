@@ -13,7 +13,7 @@ struct AppEnvironment {
     let providers: AppProviders
 
     let authService: AuthService
-    let conversationService: ConversationService
+    let conversationService: ConversationServicing
     let keyDirectoryService: KeyDirectoryService
     let relayService: RelayService
 
@@ -21,7 +21,7 @@ struct AppEnvironment {
         session: AppSession,
         providers: AppProviders,
         authService: AuthService,
-        conversationService: ConversationService,
+        conversationService: ConversationServicing,
         keyDirectoryService: KeyDirectoryService,
         relayService: RelayService
     ) {

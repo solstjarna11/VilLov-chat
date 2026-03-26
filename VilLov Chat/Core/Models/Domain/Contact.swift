@@ -13,7 +13,11 @@ struct Contact: Identifiable, Equatable {
     let name: String
     let trustState: ContactTrustState
     let userID: String?
-
+    
+    var isVerified: Bool {
+        trustState == .verified
+    }
+    
     init(
         id: UUID,
         name: String,

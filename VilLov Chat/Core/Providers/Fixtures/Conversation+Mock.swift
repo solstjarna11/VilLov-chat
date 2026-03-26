@@ -16,25 +16,28 @@ extension Conversation {
             lastActivity: Date(),
             unreadCount: 2,
             trustState: .verified,
-            disappearingEnabled: true
+            disappearingEnabled: true,
+            recipientUserID: "user_alice",
         ),
         Conversation(
-            id: UUID(),
+            id: UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!,
             title: "Bob Smith",
             lastMessagePreview: "Let’s finalize device linking tomorrow.",
             lastActivity: Date().addingTimeInterval(-3600),
             unreadCount: 0,
             trustState:.unverified,
-            disappearingEnabled: false
+            disappearingEnabled: false,
+            recipientUserID: "user_bob",
         ),
         Conversation(
-            id: UUID(),
+            id: UUID(uuidString: "pppppppp-pppp-pppp-pppp-pppppppppppp")!,
             title: "Project Team",
             lastMessagePreview: "The updated architecture diagram looks good.",
             lastActivity: Date().addingTimeInterval(-7200),
             unreadCount: 5,
             trustState: .verified,
-            disappearingEnabled: false
+            disappearingEnabled: false,
+            recipientUserID: "user_team",
         )
     ]
 }
