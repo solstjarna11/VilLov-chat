@@ -12,11 +12,24 @@ struct AppEnvironment {
     let session: AppSession
     let providers: AppProviders
 
+    let authService: AuthService
+    let conversationService: ConversationService
+    let keyDirectoryService: KeyDirectoryService
+    let relayService: RelayService
+
     init(
         session: AppSession,
-        providers: AppProviders
+        providers: AppProviders,
+        authService: AuthService,
+        conversationService: ConversationService,
+        keyDirectoryService: KeyDirectoryService,
+        relayService: RelayService
     ) {
         self.session = session
         self.providers = providers
+        self.authService = authService
+        self.conversationService = conversationService
+        self.keyDirectoryService = keyDirectoryService
+        self.relayService = relayService
     }
 }

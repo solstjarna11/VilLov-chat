@@ -14,14 +14,56 @@ final class AppContainer {
     let session: AppSession
     let environment: AppEnvironment
 
+    let tokenStore: AuthTokenStore
+    let apiClient: APIClient
+
+    let authService: AuthService
+    let keyDirectoryService: KeyDirectoryService
+    let relayService: RelayService
+    let conversationService: ConversationService
+
     init() {
-        let session = AppSession()
         let providers = AppProviders.mock
 
+        let tokenStore = AuthTokenStore()
+        let apiClient = APIClient(
+            baseURL: URL(string: "https://api.villov.example")!,
+            tokenStore: tokenStore
+        )
+
+        let authenticator = StubPasskeyAuthenticator()
+
+        let authService = AuthService(
+            apiClient: apiClient,
+            tokenStore: tokenStore,
+            authenticator: authenticator
+        )
+
+        let keyDirectoryService = KeyDirectoryService(apiClient: apiClient)
+        let relayService = RelayService(apiClient: apiClient)
+        let conversationService = ConversationService(
+            keyDirectoryService: keyDirectoryService,
+            relayService: relayService,
+            e2eeEngine: StubE2EEEngine()
+        )
+
+        let session = AppSession(tokenStore: tokenStore)
+
+        self.tokenStore = tokenStore
+        self.apiClient = apiClient
+        self.authService = authService
+        self.keyDirectoryService = keyDirectoryService
+        self.relayService = relayService
+        self.conversationService = conversationService
         self.session = session
+
         self.environment = AppEnvironment(
             session: session,
-            providers: providers
+            providers: providers,
+            authService: authService,
+            conversationService: conversationService,
+            keyDirectoryService: keyDirectoryService,
+            relayService: relayService
         )
     }
 }

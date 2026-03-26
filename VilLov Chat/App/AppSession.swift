@@ -9,25 +9,34 @@
 import Foundation
 import Observation
 
+@MainActor
 @Observable
 final class AppSession {
     var state: AppState = .launching
     var currentUserID: String?
     var isPasskeyConfigured: Bool = false
 
-    func finishLaunch() {
-        // For now, default into the unauthenticated flow.
-        // Later, this is where token restore / session restore will happen.
-        state = .unauthenticated
+    private let tokenStore: AuthTokenStore
+
+    init(tokenStore: AuthTokenStore) {
+        self.tokenStore = tokenStore
     }
 
-    func signIn(userID: String? = nil, isPasskeyConfigured: Bool = true) {
+    func finishLaunch() {
+        state = tokenStore.isAuthenticated ? .authenticated : .unauthenticated
+    }
+
+    func completeAuthentication(
+        userID: String? = nil,
+        isPasskeyConfigured: Bool = true
+    ) {
         self.currentUserID = userID
         self.isPasskeyConfigured = isPasskeyConfigured
         self.state = .authenticated
     }
 
     func signOut() {
+        tokenStore.clear()
         currentUserID = nil
         isPasskeyConfigured = false
         state = .unauthenticated
