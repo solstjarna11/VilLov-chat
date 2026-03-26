@@ -16,4 +16,6 @@ protocol ConversationServicing {
     ) async throws
 
     func fetchInbox() async throws -> [DecryptedEnvelopeMessage]
+
+    func getOrCreateConversation(with recipientUserID: String) async throws -> UUID
 }

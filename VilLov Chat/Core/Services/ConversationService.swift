@@ -9,15 +9,18 @@
 import Foundation
 
 final class ConversationService: ConversationServicing {
+    private let apiClient: APIClient
     private let keyDirectoryService: KeyDirectoryService
     private let relayService: RelayService
     private let e2eeEngine: E2EEEngine
 
     init(
+        apiClient: APIClient,
         keyDirectoryService: KeyDirectoryService,
         relayService: RelayService,
         e2eeEngine: E2EEEngine
     ) {
+        self.apiClient = apiClient
         self.keyDirectoryService = keyDirectoryService
         self.relayService = relayService
         self.e2eeEngine = e2eeEngine
@@ -75,5 +78,14 @@ final class ConversationService: ConversationServicing {
         }
 
         return decryptedMessages.sorted { $0.createdAt < $1.createdAt }
+    }
+
+    func getOrCreateConversation(with recipientUserID: String) async throws -> UUID {
+        let request = GetOrCreateConversationRequest(recipientUserID: recipientUserID)
+        let response: GetOrCreateConversationResponse = try await apiClient.post(
+            .getOrCreateConversation,
+            body: request
+        )
+        return response.conversationID
     }
 }
