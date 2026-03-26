@@ -8,7 +8,14 @@
 import SwiftUI
 
 struct LinkedDevicesScreen: View {
-    @StateObject private var viewModel = LinkedDevicesViewModel()
+    @StateObject private var viewModel: LinkedDevicesViewModel
+    
+    init() {
+        _viewModel = StateObject(wrappedValue: LinkedDevicesViewModel())
+    }
+    init(viewModel: LinkedDevicesViewModel){
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         NavigationStack {
@@ -68,5 +75,9 @@ struct LinkedDevicesScreen: View {
 }
 
 #Preview {
-    LinkedDevicesScreen()
+    LinkedDevicesScreen(
+        viewModel: LinkedDevicesViewModel(
+            provider: MockDataProvider()
+        )
+    )
 }

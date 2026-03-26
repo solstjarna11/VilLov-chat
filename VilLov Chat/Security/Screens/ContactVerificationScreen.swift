@@ -27,6 +27,10 @@ struct ContactVerificationScreen: View {
         )
     }
 
+    init(viewModel: ContactVerificationViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {

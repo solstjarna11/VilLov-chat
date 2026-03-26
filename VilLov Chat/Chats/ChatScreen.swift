@@ -14,7 +14,10 @@ struct ChatScreen: View {
     init(conversation: Conversation) {
         _viewModel = StateObject(wrappedValue: ChatViewModel(conversation: conversation))
     }
-
+    init(viewModel: ChatViewModel){
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
@@ -135,6 +138,11 @@ struct ChatScreen: View {
 
 #Preview {
     NavigationStack {
-        ChatScreen(conversation: Conversation.mockData[0])
+        ChatScreen(
+            viewModel: ChatViewModel(
+                conversation: Conversation.mockData[0],
+                provider: MockDataProvider()
+            )
+        )
     }
 }

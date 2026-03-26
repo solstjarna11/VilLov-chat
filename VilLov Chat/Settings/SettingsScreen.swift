@@ -1,7 +1,14 @@
 import SwiftUI
 
 struct SettingsScreen: View {
-    @StateObject private var viewModel = SettingsViewModel()
+    @StateObject private var viewModel: SettingsViewModel
+    
+    init() {
+        _viewModel = StateObject(wrappedValue: SettingsViewModel())
+    }
+    init(viewModel: SettingsViewModel){
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         NavigationStack {

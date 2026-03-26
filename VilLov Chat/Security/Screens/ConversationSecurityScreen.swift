@@ -16,6 +16,10 @@ struct ConversationSecurityScreen: View {
         )
     }
 
+    init(viewModel: ConversationSecurityViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+
     var body: some View {
         List {
             Section("Verification") {

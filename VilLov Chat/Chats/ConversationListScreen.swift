@@ -8,7 +8,15 @@
 import SwiftUI
 
 struct ConversationListScreen: View {
-    @StateObject private var viewModel = ConversationListViewModel()
+    @StateObject private var viewModel: ConversationListViewModel
+
+    init() {
+        _viewModel = StateObject(wrappedValue: ConversationListViewModel())
+    }
+
+    init(viewModel: ConversationListViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         NavigationStack {
@@ -46,5 +54,9 @@ struct ConversationListScreen: View {
 }
 
 #Preview {
-    ConversationListScreen()
+    ConversationListScreen(
+        viewModel: ConversationListViewModel(
+            provider: MockDataProvider()
+        )
+    )
 }
