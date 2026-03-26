@@ -72,13 +72,13 @@ struct WelcomeScreen: View {
             conversationService: PreviewConversationService(),
             keyDirectoryService: KeyDirectoryService(
                 apiClient: APIClient(
-                    baseURL: URL(string: "https://api.villov.example")!,
+                    baseURL: URL(string: "http://127.0.0.1:8000")!,
                     tokenStore: AuthTokenStore()
                 )
             ),
             relayService: RelayService(
                 apiClient: APIClient(
-                    baseURL: URL(string: "https://api.villov.example")!,
+                    baseURL: URL(string: "http://127.0.0.1:8000")!,
                     tokenStore: AuthTokenStore()
                 )
             )

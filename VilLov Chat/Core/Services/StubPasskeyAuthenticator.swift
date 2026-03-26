@@ -9,13 +9,16 @@
 import Foundation
 
 struct StubPasskeyAuthenticator: PasskeyAuthenticating {
-    func signChallenge(_ challenge: PasskeyBeginResponse) async throws -> PasskeyFinishRequest {
+    func signChallenge(
+        _ challenge: PasskeyBeginResponse,
+        userHandle: String?
+    ) async throws -> PasskeyFinishRequest {
         PasskeyFinishRequest(
             credentialID: "stub-credential-id",
             clientDataJSON: "stub-client-data",
             authenticatorData: "stub-authenticator-data",
             signature: "stub-signature",
-            userHandle: challenge.userID
+            userHandle: userHandle ?? challenge.userID
         )
     }
 }

@@ -8,7 +8,10 @@
 import Foundation
 
 protocol PasskeyAuthenticating {
-    func signChallenge(_ challenge: PasskeyBeginResponse) async throws -> PasskeyFinishRequest
+    func signChallenge(
+        _ challenge: PasskeyBeginResponse,
+        userHandle: String?
+    ) async throws -> PasskeyFinishRequest
 }
 
 @MainActor
@@ -27,14 +30,17 @@ final class AuthService {
         self.authenticator = authenticator
     }
 
-    func signInWithPasskey() async throws {
+    func signInWithPasskey(userHandle: String? = nil) async throws -> String? {
         let beginResponse: PasskeyBeginResponse = try await apiClient.post(
             .passkeyBegin,
             body: PasskeyBeginRequest(),
             authenticated: false
         )
 
-        let finishRequest = try await authenticator.signChallenge(beginResponse)
+        let finishRequest = try await authenticator.signChallenge(
+            beginResponse,
+            userHandle: userHandle
+        )
 
         let token: SessionToken = try await apiClient.post(
             .passkeyFinish,
@@ -43,6 +49,7 @@ final class AuthService {
         )
 
         tokenStore.setSessionToken(token)
+        return finishRequest.userHandle
     }
 
     func signOut() {

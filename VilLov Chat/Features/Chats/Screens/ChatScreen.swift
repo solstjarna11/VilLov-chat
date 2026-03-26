@@ -20,6 +20,15 @@ struct ChatScreen: View {
         @Bindable var bindableViewModel = viewModel
 
         VStack(spacing: 0) {
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+            }
+
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 0) {
@@ -61,7 +70,18 @@ struct ChatScreen: View {
         .navigationTitle(viewModel.conversation.title)
         .toolbar {
             #if os(iOS)
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button {
+                    viewModel.refreshInbox()
+                } label: {
+                    if viewModel.isRefreshingInbox {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                }
+                .accessibilityLabel("Refresh Inbox")
+
                 NavigationLink {
                     ConversationSecurityScreen(
                         viewModel: ConversationSecurityViewModel(
@@ -79,7 +99,18 @@ struct ChatScreen: View {
                 .accessibilityLabel("Conversation Security")
             }
             #else
-            ToolbarItem(placement: .automatic) {
+            ToolbarItemGroup(placement: .automatic) {
+                Button {
+                    viewModel.refreshInbox()
+                } label: {
+                    if viewModel.isRefreshingInbox {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                }
+                .accessibilityLabel("Refresh Inbox")
+
                 NavigationLink {
                     ConversationSecurityScreen(
                         viewModel: ConversationSecurityViewModel(

@@ -15,6 +15,7 @@ final class AppSession {
     var state: AppState = .launching
     var currentUserID: String?
     var isPasskeyConfigured: Bool = false
+    var rememberedAccountName: String?
 
     private let tokenStore: AuthTokenStore
 
@@ -28,9 +29,11 @@ final class AppSession {
 
     func completeAuthentication(
         userID: String? = nil,
+        rememberedAccountName: String? = nil,
         isPasskeyConfigured: Bool = true
     ) {
         self.currentUserID = userID
+        self.rememberedAccountName = rememberedAccountName
         self.isPasskeyConfigured = isPasskeyConfigured
         self.state = .authenticated
     }

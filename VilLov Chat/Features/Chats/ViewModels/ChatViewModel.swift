@@ -15,6 +15,7 @@ final class ChatViewModel {
     var messageText = ""
     var errorMessage: String?
     var isSending = false
+    var isRefreshingInbox = false
     private(set) var messages: [Message]
 
     let conversation: Conversation
@@ -88,6 +89,52 @@ final class ChatViewModel {
                 }
             }
         }
+    }
+
+    func refreshInbox() {
+        guard let conversationService else { return }
+
+        errorMessage = nil
+        isRefreshingInbox = true
+
+        Task {
+            do {
+                let inboxMessages = try await conversationService.fetchInbox()
+
+                await MainActor.run {
+                    self.mergeInboxMessages(inboxMessages)
+                    self.isRefreshingInbox = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.isRefreshingInbox = false
+                }
+            }
+        }
+    }
+
+    private func mergeInboxMessages(_ inboxMessages: [DecryptedEnvelopeMessage]) {
+        let matchingConversationMessages = inboxMessages.filter {
+            $0.conversationID == conversation.id
+        }
+
+        let newMessages = matchingConversationMessages.map { decrypted in
+            Message(
+                id: decrypted.id,
+                text: decrypted.plaintext,
+                isIncoming: true,
+                timestamp: decrypted.createdAt,
+                status: .sent
+            )
+        }
+
+        for newMessage in newMessages {
+            guard !messages.contains(where: { $0.id == newMessage.id }) else { continue }
+            messages.append(newMessage)
+        }
+
+        messages.sort { $0.timestamp < $1.timestamp }
     }
 
     private func markMessageAsSent(_ id: UUID) {

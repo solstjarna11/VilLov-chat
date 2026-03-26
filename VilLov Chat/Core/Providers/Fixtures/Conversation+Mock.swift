@@ -29,15 +29,6 @@ extension Conversation {
             disappearingEnabled: false,
             recipientUserID: "user_bob",
         ),
-        Conversation(
-            id: UUID(uuidString: "pppppppp-pppp-pppp-pppp-pppppppppppp")!,
-            title: "Project Team",
-            lastMessagePreview: "The updated architecture diagram looks good.",
-            lastActivity: Date().addingTimeInterval(-7200),
-            unreadCount: 5,
-            trustState: .verified,
-            disappearingEnabled: false,
-            recipientUserID: "user_team",
-        )
+        
     ]
 }

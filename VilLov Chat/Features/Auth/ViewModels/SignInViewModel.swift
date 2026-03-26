@@ -14,6 +14,8 @@ import Observation
 final class SignInViewModel {
     var isLoading = false
     var errorMessage: String?
+    var selectedDevAccount: DevAuthAccount = .alice
+    var showsAccountPicker = false
 
     private let authService: AuthService
     private let session: AppSession
@@ -26,16 +28,42 @@ final class SignInViewModel {
         self.session = session
     }
 
-    func signIn() {
+    var rememberedAccountName: String? {
+        session.rememberedAccountName
+    }
+
+    func signInWithDefaultPasskey() {
+        signIn(using: nil, rememberedName: session.rememberedAccountName)
+    }
+
+    func signInWithRememberedAccount() {
+        signIn(using: session.currentUserID, rememberedName: session.rememberedAccountName)
+    }
+
+    func signInWithSelectedDevAccount() {
+        signIn(
+            using: selectedDevAccount.userHandle,
+            rememberedName: selectedDevAccount.displayName
+        )
+    }
+
+    private func signIn(using userHandle: String?, rememberedName: String?) {
         errorMessage = nil
         isLoading = true
 
         Task {
             do {
-                try await authService.signInWithPasskey()
+                let resolvedUserHandle = try await authService.signInWithPasskey(userHandle: userHandle)
 
                 await MainActor.run {
-                    session.completeAuthentication()
+                    let finalUserID = resolvedUserHandle ?? userHandle
+                    let displayName = rememberedName ?? Self.displayName(for: finalUserID)
+
+                    session.completeAuthentication(
+                        userID: finalUserID,
+                        rememberedAccountName: displayName
+                    )
+
                     isLoading = false
                 }
             } catch {
@@ -44,6 +72,19 @@ final class SignInViewModel {
                     isLoading = false
                 }
             }
+        }
+    }
+
+    private static func displayName(for userID: String?) -> String? {
+        switch userID {
+        case "user_alice":
+            return "Alice"
+        case "user_bob":
+            return "Bob"
+        case "user_charlie":
+            return "Charlie"
+        default:
+            return nil
         }
     }
 }

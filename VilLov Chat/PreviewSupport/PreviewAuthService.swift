@@ -13,7 +13,7 @@ enum PreviewAuthService {
     static func make() -> AuthService {
         let tokenStore = AuthTokenStore()
         let apiClient = APIClient(
-            baseURL: URL(string: "https://api.villov.example")!,
+            baseURL: URL(string: "http://127.0.0.1:8000")!,
             tokenStore: tokenStore
         )
 
