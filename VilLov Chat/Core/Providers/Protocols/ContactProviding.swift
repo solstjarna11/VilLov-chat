@@ -9,5 +9,5 @@
 import Foundation
 
 protocol ContactProviding {
-    func loadContacts() -> [Contact]
+    func loadContacts(for currentUserID: String?) -> [Contact]
 }

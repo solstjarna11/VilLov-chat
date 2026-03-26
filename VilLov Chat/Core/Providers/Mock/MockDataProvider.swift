@@ -9,12 +9,44 @@
 import Foundation
 
 struct MockDataProvider: ConversationProviding, ContactProviding, DeviceProviding, MessageProviding {
-    func loadConversations() -> [Conversation] {
-        Conversation.mockData
+    func loadConversations(for currentUserID: String?) -> [Conversation] {
+        switch currentUserID {
+        case "user_alice":
+            return [
+                .aliceViewOfBob,
+                .aliceViewOfCharlie
+            ]
+        case "user_bob":
+            return [
+                .bobViewOfAlice
+            ]
+        case "user_charlie":
+            return [
+                .charlieViewOfAlice
+            ]
+        default:
+            return []
+        }
     }
 
-    func loadContacts() -> [Contact] {
-        Contact.mockData
+    func loadContacts(for currentUserID: String?) -> [Contact] {
+        switch currentUserID {
+        case "user_alice":
+            return [
+                .mockBob,
+                .mockCharlie
+            ]
+        case "user_bob":
+            return [
+                .mockAlice
+            ]
+        case "user_charlie":
+            return [
+                .mockAlice
+            ]
+        default:
+            return []
+        }
     }
 
     func loadDevices() -> [Device] {

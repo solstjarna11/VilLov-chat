@@ -9,13 +9,13 @@
 import Foundation
 
 struct EmptyConversationProvider: ConversationProviding {
-    func loadConversations() -> [Conversation] {
+    func loadConversations(for currentUserId: String?) -> [Conversation] {
         []
     }
 }
 
 struct PopulatedConversationProvider: ConversationProviding {
-    func loadConversations() -> [Conversation] {
+    func loadConversations(for currentUserId: String?) -> [Conversation] {
         [
             Conversation(
                 id: UUID(),

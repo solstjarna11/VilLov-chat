@@ -9,18 +9,29 @@
 import Foundation
 
 struct EmptyContactProvider: ContactProviding {
-    func loadContacts() -> [Contact] {
+    func loadContacts(for currentUserID: String?) -> [Contact] {
         []
     }
 }
 
 struct PopulatedContactProvider: ContactProviding {
-    func loadContacts() -> [Contact] {
-        [
-            Contact(id: UUID(), name: "Alice Johnson", trustState: .verified),
-            Contact(id: UUID(), name: "Bob Smith", trustState: .unverified),
-            Contact(id: UUID(), name: "Charlie Team", trustState: .verified),
-            Contact(id: UUID(), name: "David Lee", trustState: .unverified),
-        ]
+    func loadContacts(for currentUserID: String?) -> [Contact] {
+        switch currentUserID {
+        case "user_alice":
+            return [
+                .mockBob,
+                .mockCharlie
+            ]
+        case "user_bob":
+            return [
+                .mockAlice
+            ]
+        case "user_charlie":
+            return [
+                .mockAlice
+            ]
+        default:
+            return Contact.mockData
+        }
     }
 }

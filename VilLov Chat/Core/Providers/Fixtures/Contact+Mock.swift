@@ -28,7 +28,6 @@ extension Contact {
         trustState: .verified,
         userID: "user_charlie"
     )
-    
 
     static let mockData: [Contact] = [
         .mockAlice,

@@ -9,6 +9,7 @@
 import Foundation
 
 struct PreviewConversationService: ConversationServicing {
+
     func sendMessage(
         plaintext: String,
         to recipientUserID: String,
@@ -19,5 +20,10 @@ struct PreviewConversationService: ConversationServicing {
 
     func fetchInbox() async throws -> [DecryptedEnvelopeMessage] {
         []
+    }
+
+    func getOrCreateConversation(with recipientUserID: String) async throws -> UUID {
+        // Return a stable deterministic ID for previews
+        UUID()
     }
 }

@@ -9,5 +9,5 @@
 import Foundation
 
 protocol ConversationProviding {
-    func loadConversations() -> [Conversation]
+    func loadConversations(for currentUserID: String?) -> [Conversation]
 }
