@@ -7,13 +7,13 @@
 
 
 import Foundation
-import SwiftUI
-import Combine
+import Observation
 
 @MainActor
-final class ConversationSecurityViewModel: ObservableObject {
-    @Published var disappearingMessagesEnabled: Bool
-    @Published var selectedExpiration: MessageExpiration
+@Observable
+final class ConversationSecurityViewModel {
+    var disappearingMessagesEnabled: Bool
+    var selectedExpiration: MessageExpiration
 
     let conversation: Conversation
 

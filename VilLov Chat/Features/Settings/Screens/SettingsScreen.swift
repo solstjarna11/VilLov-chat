@@ -1,22 +1,35 @@
+//
+//  SecurityScreen.swift
+//  VilLov Chat
+//
+//  Created by Lovísa Sól on 25.3.2026.
+//
+
 import SwiftUI
+import Observation
 
 struct SettingsScreen: View {
-    @StateObject private var viewModel: SettingsViewModel
-    
-    init() {
-        _viewModel = StateObject(wrappedValue: SettingsViewModel())
-    }
-    init(viewModel: SettingsViewModel){
-        _viewModel = StateObject(wrappedValue: viewModel)
+    @State private var viewModel: SettingsViewModel
+
+    private let deviceProvider: DeviceProviding
+
+    init(
+        viewModel: SettingsViewModel,
+        deviceProvider: DeviceProviding
+    ) {
+        _viewModel = State(initialValue: viewModel)
+        self.deviceProvider = deviceProvider
     }
 
     var body: some View {
+        @Bindable var bindableViewModel = viewModel
+
         NavigationStack {
             List {
                 accountSection
-                securitySection
-                privacySection
-                notificationsSection
+                securitySection(viewModel: $bindableViewModel)
+                privacySection(viewModel: $bindableViewModel)
+                notificationsSection(viewModel: $bindableViewModel)
                 storageSection
                 aboutSection
             }
@@ -31,10 +44,14 @@ struct SettingsScreen: View {
         }
     }
 
-    private var securitySection: some View {
+    private func securitySection(viewModel: Bindable<SettingsViewModel>) -> some View {
         Section("Security") {
             NavigationLink {
-                LinkedDevicesScreen()
+                LinkedDevicesScreen(
+                    viewModel: LinkedDevicesViewModel(
+                        provider: deviceProvider
+                    )
+                )
             } label: {
                 SettingsRow(title: "Linked Devices", systemImage: "desktopcomputer")
             }
@@ -45,14 +62,14 @@ struct SettingsScreen: View {
                 SettingsRow(title: "Security Overview", systemImage: "checkmark.shield")
             }
 
-            Toggle("Use Biometrics / Device Unlock", isOn: $viewModel.biometricsEnabled)
+            Toggle("Use Biometrics / Device Unlock", isOn: viewModel.biometricsEnabled)
         }
     }
 
-    private var privacySection: some View {
+    private func privacySection(viewModel: Bindable<SettingsViewModel>) -> some View {
         Section("Privacy") {
-            Toggle("Read Receipts", isOn: $viewModel.readReceiptsEnabled)
-            Toggle("Link Previews", isOn: $viewModel.linkPreviewsEnabled)
+            Toggle("Read Receipts", isOn: viewModel.readReceiptsEnabled)
+            Toggle("Link Previews", isOn: viewModel.linkPreviewsEnabled)
 
             NavigationLink {
                 RecoveryPlaceholderScreen()
@@ -62,9 +79,9 @@ struct SettingsScreen: View {
         }
     }
 
-    private var notificationsSection: some View {
+    private func notificationsSection(viewModel: Bindable<SettingsViewModel>) -> some View {
         Section("Notifications") {
-            Toggle("Enable Notifications", isOn: $viewModel.notificationsEnabled)
+            Toggle("Enable Notifications", isOn: viewModel.notificationsEnabled)
         }
     }
 
@@ -83,5 +100,8 @@ struct SettingsScreen: View {
 }
 
 #Preview {
-    SettingsScreen()
+    SettingsScreen(
+        viewModel: SettingsViewModel(),
+        deviceProvider: EmptyDeviceProvider()
+    )
 }

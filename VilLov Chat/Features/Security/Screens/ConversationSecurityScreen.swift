@@ -6,29 +6,28 @@
 //
 
 import SwiftUI
+import Observation
 
 struct ConversationSecurityScreen: View {
-    @StateObject private var viewModel: ConversationSecurityViewModel
-
-    init(conversation: Conversation) {
-        _viewModel = StateObject(
-            wrappedValue: ConversationSecurityViewModel(conversation: conversation)
-        )
-    }
+    @State private var viewModel: ConversationSecurityViewModel
 
     init(viewModel: ConversationSecurityViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
+        _viewModel = State(initialValue: viewModel)
     }
 
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         List {
             Section("Verification") {
                 NavigationLink {
                     ContactVerificationScreen(
-                        conversation: viewModel.conversation,
-                        verificationData: viewModel.conversation.isVerified
-                            ? MockContactVerificationData.verified
-                            : MockContactVerificationData.unverified
+                        viewModel: ContactVerificationViewModel(
+                            conversation: viewModel.conversation,
+                            verificationData: viewModel.conversation.isVerified
+                                ? MockContactVerificationData.verified
+                                : MockContactVerificationData.unverified
+                        )
                     )
                 } label: {
                     HStack {
@@ -63,9 +62,9 @@ struct ConversationSecurityScreen: View {
             }
         }
         .navigationTitle("Conversation Security")
-#if os(iOS)
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
-#endif
+        #endif
     }
 }
 

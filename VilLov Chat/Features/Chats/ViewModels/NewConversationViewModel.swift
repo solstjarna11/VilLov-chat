@@ -7,28 +7,19 @@
 
 
 import Foundation
-import SwiftUI
-import Combine
+import Observation
 
 @MainActor
-final class NewConversationViewModel: ObservableObject {
-    @Published var searchText = ""
-    @Published private(set) var contacts: [Contact]
+@Observable
+final class NewConversationViewModel {
+    var searchText = ""
+    private(set) var contacts: [Contact]
 
     private let provider: ContactProviding
 
-    init() {
-        let provider = AppProviders.contacts
+    init(provider: ContactProviding) {
         self.provider = provider
         self.contacts = provider.loadContacts()
-    }
-
-    init(
-        provider: ContactProviding,
-        contacts: [Contact]? = nil
-    ) {
-        self.provider = provider
-        self.contacts = contacts ?? provider.loadContacts()
     }
 
     var filteredContacts: [Contact] {

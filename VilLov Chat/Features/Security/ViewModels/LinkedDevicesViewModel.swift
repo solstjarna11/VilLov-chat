@@ -7,27 +7,18 @@
 
 
 import Foundation
-import SwiftUI
-import Combine
+import Observation
 
 @MainActor
-final class LinkedDevicesViewModel: ObservableObject {
-    @Published private(set) var devices: [Device]
+@Observable
+final class LinkedDevicesViewModel {
+    private(set) var devices: [Device]
 
     private let provider: DeviceProviding
 
-    init() {
-        let provider = AppProviders.devices
+    init(provider: DeviceProviding) {
         self.provider = provider
         self.devices = provider.loadDevices()
-    }
-
-    init(
-        provider: DeviceProviding,
-        devices: [Device]? = nil
-    ) {
-        self.provider = provider
-        self.devices = devices ?? provider.loadDevices()
     }
 
     var currentDevice: Device? {

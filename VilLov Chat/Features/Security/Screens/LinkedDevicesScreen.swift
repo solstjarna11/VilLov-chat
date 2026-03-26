@@ -6,15 +6,13 @@
 //
 
 import SwiftUI
+import Observation
 
 struct LinkedDevicesScreen: View {
-    @StateObject private var viewModel: LinkedDevicesViewModel
-    
-    init() {
-        _viewModel = StateObject(wrappedValue: LinkedDevicesViewModel())
-    }
-    init(viewModel: LinkedDevicesViewModel){
-        _viewModel = StateObject(wrappedValue: viewModel)
+    @State private var viewModel: LinkedDevicesViewModel
+
+    init(viewModel: LinkedDevicesViewModel) {
+        _viewModel = State(initialValue: viewModel)
     }
 
     var body: some View {

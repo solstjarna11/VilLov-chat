@@ -7,28 +7,19 @@
 
 
 import Foundation
-import SwiftUI
-import Combine
+import Observation
 
 @MainActor
-final class ConversationListViewModel: ObservableObject {
-    @Published var searchText = ""
-    @Published private(set) var conversations: [Conversation]
+@Observable
+final class ConversationListViewModel {
+    var searchText = ""
+    private(set) var conversations: [Conversation]
 
     private let provider: ConversationProviding
 
-    init() {
-        let provider = AppProviders.conversations
+    init(provider: ConversationProviding) {
         self.provider = provider
         self.conversations = provider.loadConversations()
-    }
-
-    init(
-        provider: ConversationProviding,
-        conversations: [Conversation]? = nil
-    ) {
-        self.provider = provider
-        self.conversations = conversations ?? provider.loadConversations()
     }
 
     var filteredConversations: [Conversation] {

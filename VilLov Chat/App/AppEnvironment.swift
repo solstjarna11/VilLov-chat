@@ -8,9 +8,15 @@
 
 import Foundation
 
-enum AppEnvironment {
-    static let isDevelopmentAuthBypassEnabled = true
+struct AppEnvironment {
+    let session: AppSession
+    let providers: AppProviders
 
-    static let initialAppState: AppState = .authenticated
-    // static let initialAppState: AppState = .unauthenticated // for unauthenticated testing
+    init(
+        session: AppSession,
+        providers: AppProviders
+    ) {
+        self.session = session
+        self.providers = providers
+    }
 }

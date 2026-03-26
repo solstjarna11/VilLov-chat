@@ -6,29 +6,13 @@
 //
 
 import SwiftUI
-
-#if os(macOS)
-import AppKit
-#endif
-
-#if os(iOS)
-import UIKit
-#endif
+import Observation
 
 struct ContactVerificationScreen: View {
-    @StateObject private var viewModel: ContactVerificationViewModel
-
-    init(conversation: Conversation, verificationData: ContactVerificationViewData) {
-        _viewModel = StateObject(
-            wrappedValue: ContactVerificationViewModel(
-                conversation: conversation,
-                verificationData: verificationData
-            )
-        )
-    }
+    @State private var viewModel: ContactVerificationViewModel
 
     init(viewModel: ContactVerificationViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
+        _viewModel = State(initialValue: viewModel)
     }
 
     var body: some View {

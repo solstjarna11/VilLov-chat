@@ -6,23 +6,36 @@
 //
 
 import SwiftUI
+import Observation
 
 struct ConversationListScreen: View {
-    @StateObject private var viewModel: ConversationListViewModel
+    @State private var viewModel: ConversationListViewModel
 
-    init() {
-        _viewModel = StateObject(wrappedValue: ConversationListViewModel())
-    }
+    private let messageProvider: MessageProviding
+    private let contactProvider: ContactProviding
 
-    init(viewModel: ConversationListViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
+    init(
+        viewModel: ConversationListViewModel,
+        messageProvider: MessageProviding,
+        contactProvider: ContactProviding
+    ) {
+        _viewModel = State(initialValue: viewModel)
+        self.messageProvider = messageProvider
+        self.contactProvider = contactProvider
     }
 
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         NavigationStack {
             List(viewModel.filteredConversations) { conversation in
                 NavigationLink {
-                    ChatScreen(conversation: conversation)
+                    ChatScreen(
+                        viewModel: ChatViewModel(
+                            conversation: conversation,
+                            provider: messageProvider
+                        )
+                    )
                 } label: {
                     ConversationRow(conversation: conversation)
                 }
@@ -33,7 +46,12 @@ struct ConversationListScreen: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink {
-                        NewConversationScreen()
+                        NewConversationScreen(
+                            viewModel: NewConversationViewModel(
+                                provider: contactProvider
+                            ),
+                            messageProvider: messageProvider
+                        )
                     } label: {
                         Image(systemName: "square.and.pencil")
                     }
@@ -57,7 +75,9 @@ struct ConversationListScreen: View {
     ConversationListScreen(
         viewModel: ConversationListViewModel(
             provider: PopulatedConversationProvider()
-        )
+        ),
+        messageProvider: EmptyMessageProvider(),
+        contactProvider: EmptyContactProvider()
     )
 }
 
@@ -65,6 +85,8 @@ struct ConversationListScreen: View {
     ConversationListScreen(
         viewModel: ConversationListViewModel(
             provider: EmptyConversationProvider()
-        )
+        ),
+        messageProvider: EmptyMessageProvider(),
+        contactProvider: EmptyContactProvider()
     )
 }

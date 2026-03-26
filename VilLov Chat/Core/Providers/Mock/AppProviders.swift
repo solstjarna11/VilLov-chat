@@ -8,11 +8,34 @@
 
 import Foundation
 
-enum AppProviders {
-    static let mock = MockDataProvider()
+struct AppProviders {
+    let conversations: ConversationProviding
+    let contacts: ContactProviding
+    let devices: DeviceProviding
+    let messages: MessageProviding
 
-    static var conversations: ConversationProviding { mock }
-    static var contacts: ContactProviding { mock }
-    static var devices: DeviceProviding { mock }
-    static var messages: MessageProviding { mock }
+    init(
+        conversations: ConversationProviding,
+        contacts: ContactProviding,
+        devices: DeviceProviding,
+        messages: MessageProviding
+    ) {
+        self.conversations = conversations
+        self.contacts = contacts
+        self.devices = devices
+        self.messages = messages
+    }
+}
+
+extension AppProviders {
+    static let mock: AppProviders = {
+        let mock = MockDataProvider()
+
+        return AppProviders(
+            conversations: mock,
+            contacts: mock,
+            devices: mock,
+            messages: mock
+        )
+    }()
 }

@@ -7,33 +7,25 @@
 
 
 import Foundation
-import SwiftUI
-import Combine
+import Observation
 
 @MainActor
-final class ChatViewModel: ObservableObject {
-    @Published var messageText = ""
-    @Published private(set) var messages: [Message]
+@Observable
+final class ChatViewModel {
+    var messageText = ""
+    private(set) var messages: [Message]
 
     let conversation: Conversation
 
     private let provider: MessageProviding
 
-    init(conversation: Conversation) {
-        let provider = AppProviders.messages
-        self.conversation = conversation
-        self.provider = provider
-        self.messages = provider.loadMessages(for: conversation)
-    }
-
     init(
         conversation: Conversation,
-        provider: MessageProviding,
-        messages: [Message]? = nil
+        provider: MessageProviding
     ) {
         self.conversation = conversation
         self.provider = provider
-        self.messages = messages ?? provider.loadMessages(for: conversation)
+        self.messages = provider.loadMessages(for: conversation)
     }
 
     var trimmedMessageText: String {

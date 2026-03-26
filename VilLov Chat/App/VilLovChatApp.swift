@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct VilLovChatApp: App {
+    @State private var container = AppContainer()
+
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(environment: container.environment)
         }
     }
 }

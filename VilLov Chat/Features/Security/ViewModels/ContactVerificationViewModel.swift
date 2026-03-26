@@ -5,13 +5,20 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
-
 import Foundation
-import SwiftUI
-import Combine
+import Observation
+
+#if os(macOS)
+import AppKit
+#endif
+
+#if os(iOS)
+import UIKit
+#endif
 
 @MainActor
-final class ContactVerificationViewModel: ObservableObject {
+@Observable
+final class ContactVerificationViewModel {
     let conversation: Conversation
     let verificationData: ContactVerificationViewData
 

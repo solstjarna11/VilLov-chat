@@ -8,22 +8,37 @@
 import SwiftUI
 
 struct MainTabView: View {
+    let environment: AppEnvironment
+
     var body: some View {
         TabView {
-            ConversationListScreen()
-                .tabItem {
-                    Label("Chats", systemImage: "message")
-                }
+            ConversationListScreen(
+                viewModel: ConversationListViewModel(
+                    provider: environment.providers.conversations
+                ),
+                messageProvider: environment.providers.messages,
+                contactProvider: environment.providers.contacts
+            )
+            .tabItem {
+                Label("Chats", systemImage: "message")
+            }
 
-            LinkedDevicesScreen()
-                .tabItem {
-                    Label("Devices", systemImage: "desktopcomputer")
-                }
+            LinkedDevicesScreen(
+                viewModel: LinkedDevicesViewModel(
+                    provider: environment.providers.devices
+                )
+            )
+            .tabItem {
+                Label("Devices", systemImage: "iphone")
+            }
 
-            SettingsScreen()
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape")
-                }
+            SettingsScreen(
+                viewModel: SettingsViewModel(),
+                deviceProvider: environment.providers.devices
+            )
+            .tabItem {
+                Label("Settings", systemImage: "gearshape")
+            }
         }
     }
 }

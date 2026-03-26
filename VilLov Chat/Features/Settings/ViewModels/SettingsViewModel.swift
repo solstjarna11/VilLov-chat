@@ -7,15 +7,15 @@
 
 
 import Foundation
-import SwiftUI
-import Combine
+import Observation
 
 @MainActor
-final class SettingsViewModel: ObservableObject {
-    @Published var notificationsEnabled: Bool
-    @Published var biometricsEnabled: Bool
-    @Published var linkPreviewsEnabled: Bool
-    @Published var readReceiptsEnabled: Bool
+@Observable
+final class SettingsViewModel {
+    var notificationsEnabled: Bool
+    var biometricsEnabled: Bool
+    var linkPreviewsEnabled: Bool
+    var readReceiptsEnabled: Bool
 
     init(
         notificationsEnabled: Bool = true,

@@ -6,19 +6,19 @@
 //
 
 import SwiftUI
+import Observation
 
 struct ChatScreen: View {
-    @StateObject private var viewModel: ChatViewModel
+    @State private var viewModel: ChatViewModel
     @FocusState private var isInputFocused: Bool
 
-    init(conversation: Conversation) {
-        _viewModel = StateObject(wrappedValue: ChatViewModel(conversation: conversation))
+    init(viewModel: ChatViewModel) {
+        _viewModel = State(initialValue: viewModel)
     }
-    init(viewModel: ChatViewModel){
-        _viewModel = StateObject(wrappedValue: viewModel)
-    }
-    
+
     var body: some View {
+        @Bindable var bindableViewModel = viewModel
+
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
                 ScrollView {
@@ -46,14 +46,16 @@ struct ChatScreen: View {
                 }
                 .onAppear {
                     guard let lastMessage = viewModel.messages.last else { return }
-
                     proxy.scrollTo(lastMessage.id, anchor: .bottom)
                 }
             }
 
             Divider()
 
-            messageComposer
+            messageComposer(
+                viewModel: viewModel,
+                bindableViewModel: $bindableViewModel
+            )
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .navigationTitle(viewModel.conversation.title)
@@ -61,7 +63,11 @@ struct ChatScreen: View {
             #if os(iOS)
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
-                    ConversationSecurityScreen(conversation: viewModel.conversation)
+                    ConversationSecurityScreen(
+                        viewModel: ConversationSecurityViewModel(
+                            conversation: viewModel.conversation
+                        )
+                    )
                 } label: {
                     HStack(spacing: 6) {
                         VerificationBadge(isVerified: viewModel.conversation.isVerified)
@@ -75,7 +81,11 @@ struct ChatScreen: View {
             #else
             ToolbarItem(placement: .automatic) {
                 NavigationLink {
-                    ConversationSecurityScreen(conversation: viewModel.conversation)
+                    ConversationSecurityScreen(
+                        viewModel: ConversationSecurityViewModel(
+                            conversation: viewModel.conversation
+                        )
+                    )
                 } label: {
                     HStack(spacing: 6) {
                         VerificationBadge(isVerified: viewModel.conversation.isVerified)
@@ -90,9 +100,12 @@ struct ChatScreen: View {
         }
     }
 
-    private var messageComposer: some View {
+    private func messageComposer(
+        viewModel: ChatViewModel,
+        bindableViewModel: Bindable<ChatViewModel>
+    ) -> some View {
         HStack(spacing: 12) {
-            TextField("Message", text: $viewModel.messageText, axis: .vertical)
+            TextField("Message", text: bindableViewModel.messageText, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .lineLimit(1...4)
                 .focused($isInputFocused)
@@ -114,7 +127,11 @@ struct ChatScreen: View {
 
     private var securityBanner: some View {
         NavigationLink {
-            ConversationSecurityScreen(conversation: viewModel.conversation)
+            ConversationSecurityScreen(
+                viewModel: ConversationSecurityViewModel(
+                    conversation: viewModel.conversation
+                )
+            )
         } label: {
             VStack(alignment: .leading, spacing: 8) {
                 SecurityStatusBanner(

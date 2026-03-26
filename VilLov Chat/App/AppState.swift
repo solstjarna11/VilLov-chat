@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum AppState {
+enum AppState: Equatable {
     case launching
     case unauthenticated
     case authenticated

@@ -6,19 +6,24 @@
 //
 
 import SwiftUI
+import Observation
 
 struct NewConversationScreen: View {
-    @StateObject private var viewModel: NewConversationViewModel
-    
-    init() {
-            _viewModel = StateObject(wrappedValue: NewConversationViewModel())
-        }
+    @State private var viewModel: NewConversationViewModel
 
-        init(viewModel: NewConversationViewModel) {
-            _viewModel = StateObject(wrappedValue: viewModel)
-        }
+    private let messageProvider: MessageProviding
+
+    init(
+        viewModel: NewConversationViewModel,
+        messageProvider: MessageProviding
+    ) {
+        _viewModel = State(initialValue: viewModel)
+        self.messageProvider = messageProvider
+    }
 
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         List {
             if viewModel.hasResults {
                 if !viewModel.verifiedContacts.isEmpty {
@@ -53,8 +58,15 @@ struct NewConversationScreen: View {
 
     @ViewBuilder
     private func contactNavigationLink(for contact: Contact) -> some View {
+        let conversation = viewModel.makeConversation(from: contact)
+
         NavigationLink {
-            ChatScreen(conversation: viewModel.makeConversation(from: contact))
+            ChatScreen(
+                viewModel: ChatViewModel(
+                    conversation: conversation,
+                    provider: messageProvider
+                )
+            )
         } label: {
             ContactRow(contact: contact)
         }
@@ -66,7 +78,8 @@ struct NewConversationScreen: View {
         NewConversationScreen(
             viewModel: NewConversationViewModel(
                 provider: PopulatedContactProvider()
-            )
+            ),
+            messageProvider: EmptyMessageProvider()
         )
     }
 }
@@ -76,7 +89,8 @@ struct NewConversationScreen: View {
         NewConversationScreen(
             viewModel: NewConversationViewModel(
                 provider: EmptyContactProvider()
-            )
+            ),
+            messageProvider: EmptyMessageProvider()
         )
     }
 }

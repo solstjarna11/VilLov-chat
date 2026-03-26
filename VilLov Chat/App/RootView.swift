@@ -8,38 +8,25 @@
 import SwiftUI
 
 struct RootView: View {
-    @State private var appState: AppState = .launching
+    let environment: AppEnvironment
 
     var body: some View {
+        @Bindable var session = environment.session
+
         Group {
-            switch appState {
+            switch session.state {
             case .launching:
                 LaunchScreen()
+                    .task {
+                        session.finishLaunch()
+                    }
+
             case .unauthenticated:
                 WelcomeScreen()
+
             case .authenticated:
-                MainTabView()
+                MainTabView(environment: environment)
             }
         }
-        .task {
-            await determineInitialAppState()
-        }
-    }
-
-    private func determineInitialAppState() async {
-        // Real implementation path:
-        // - check whether local app bootstrap data exists
-        // - check whether user has an authenticated session
-        // - later check device registration / passkey state
-        //
-        // For now, keep the state decision centralized here.
-        #if DEBUG
-        if AppEnvironment.isDevelopmentAuthBypassEnabled {
-            appState = AppEnvironment.initialAppState
-            return
-        }
-        #endif
-
-        appState = .unauthenticated
     }
 }
