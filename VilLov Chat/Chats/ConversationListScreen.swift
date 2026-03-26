@@ -53,10 +53,18 @@ struct ConversationListScreen: View {
     }
 }
 
-#Preview {
+#Preview("Populated Conversations") {
     ConversationListScreen(
         viewModel: ConversationListViewModel(
-            provider: MockDataProvider()
+            provider: PopulatedConversationProvider()
+        )
+    )
+}
+
+#Preview("Empty Conversations") {
+    ConversationListScreen(
+        viewModel: ConversationListViewModel(
+            provider: EmptyConversationProvider()
         )
     )
 }

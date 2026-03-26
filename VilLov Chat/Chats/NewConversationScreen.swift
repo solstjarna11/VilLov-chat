@@ -61,11 +61,21 @@ struct NewConversationScreen: View {
     }
 }
 
-#Preview {
+#Preview("Contacts Available") {
     NavigationStack {
         NewConversationScreen(
             viewModel: NewConversationViewModel(
-                provider: MockDataProvider()
+                provider: PopulatedContactProvider()
+            )
+        )
+    }
+}
+
+#Preview("No Contacts") {
+    NavigationStack {
+        NewConversationScreen(
+            viewModel: NewConversationViewModel(
+                provider: EmptyContactProvider()
             )
         )
     }

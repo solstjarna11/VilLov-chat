@@ -74,10 +74,18 @@ struct LinkedDevicesScreen: View {
     }
 }
 
-#Preview {
+#Preview("Multiple Linked Devices") {
     LinkedDevicesScreen(
         viewModel: LinkedDevicesViewModel(
-            provider: MockDataProvider()
+            provider: MultipleDeviceProvider()
+        )
+    )
+}
+
+#Preview("No Linked Devices") {
+    LinkedDevicesScreen(
+        viewModel: LinkedDevicesViewModel(
+            provider: EmptyDeviceProvider()
         )
     )
 }
