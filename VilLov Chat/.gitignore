@@ -1,0 +1,14 @@
+# Xcode User Data & Build Files
+xcuserdata/
+*.xcworkspace
+.build/
+.swiftpm/
+*.dSYM
+*.ipa
+*.pbxproj
+*.xcodeproj/project.pbxproj
+# Swift/Obj-C
+*.hmap
+
+# Sensitive Info
+.env
