@@ -88,38 +88,43 @@ struct SignInScreen: View {
         .navigationTitle("Sign In")
         .sheet(isPresented: $viewModel.showsAccountPicker) {
             NavigationStack {
-                List {
-                    Section("Development Accounts") {
-                        Picker("Account", selection: $viewModel.selectedDevAccount) {
-                            ForEach(DevAuthAccount.allCases) { account in
-                                Text(account.displayName).tag(account)
-                            }
-                        }
-                        .pickerStyle(.inline)
-                    }
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Choose an account to continue.")
+                        .foregroundStyle(.secondary)
 
-                    Section {
+                    Picker("Account", selection: $viewModel.selectedDevAccount) {
+                        ForEach(DevAuthAccount.allCases) { account in
+                            Text(account.displayName).tag(account)
+                        }
+                    }
+                    #if os(macOS)
+                    .pickerStyle(.radioGroup)
+                    #else
+                    .pickerStyle(.inline)
+                    #endif
+
+                    Spacer()
+
+                    HStack {
+                        Spacer()
+
+                        Button("Cancel") {
+                            viewModel.showsAccountPicker = false
+                        }
+
                         Button {
                             viewModel.showsAccountPicker = false
                             viewModel.signInWithSelectedDevAccount()
                         } label: {
-                            Text("Continue with Selected Account")
-                                .frame(maxWidth: .infinity)
+                            Text("Continue")
+                                .frame(minWidth: 100)
                         }
                         .buttonStyle(.borderedProminent)
                     }
                 }
+                .padding(24)
+                .frame(minWidth: 420, minHeight: 220)
                 .navigationTitle("Use Another Account")
-                #if os(iOS)
-                .navigationBarTitleDisplayMode(.inline)
-                #endif
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            viewModel.showsAccountPicker = false
-                        }
-                    }
-                }
             }
         }
     }
