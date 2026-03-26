@@ -13,13 +13,23 @@ import Observation
 @Observable
 final class NewConversationViewModel {
     var searchText = ""
+    var isCreatingConversation = false
+    var errorMessage: String?
     private(set) var contacts: [Contact]
 
     private let provider: ContactProviding
+    private let conversationService: ConversationServicing?
+    private let currentUserID: String?
 
-    init(provider: ContactProviding) {
+    init(
+        provider: ContactProviding,
+        conversationService: ConversationServicing? = nil,
+        currentUserID: String? = nil
+    ) {
         self.provider = provider
-        self.contacts = provider.loadContacts()
+        self.conversationService = conversationService
+        self.currentUserID = currentUserID
+        self.contacts = provider.loadContacts(for: currentUserID)
     }
 
     var filteredContacts: [Contact] {
@@ -46,16 +56,34 @@ final class NewConversationViewModel {
         !filteredContacts.isEmpty
     }
 
-    func makeConversation(from contact: Contact) -> Conversation {
-        Conversation(
-            id: UUID(),
+    func createConversation(from contact: Contact) async throws -> Conversation {
+        guard let conversationService else {
+            throw NSError(
+                domain: "NewConversationViewModel",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Conversation service is unavailable."]
+            )
+        }
+
+        guard let recipientUserID = contact.userID else {
+            throw NSError(
+                domain: "NewConversationViewModel",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Contact is missing a backend user ID."]
+            )
+        }
+
+        let conversationID = try await conversationService.getOrCreateConversation(with: recipientUserID)
+
+        return Conversation(
+            id: conversationID,
             title: contact.name,
             lastMessagePreview: "",
             lastActivity: Date(),
             unreadCount: 0,
             trustState: contact.trustState,
             disappearingEnabled: false,
-            recipientUserID: contact.userID
+            recipientUserID: recipientUserID
         )
     }
 }

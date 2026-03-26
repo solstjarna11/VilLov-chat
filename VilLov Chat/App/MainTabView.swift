@@ -14,11 +14,13 @@ struct MainTabView: View {
         TabView {
             ConversationListScreen(
                 viewModel: ConversationListViewModel(
-                    provider: environment.providers.conversations
+                    provider: environment.providers.conversations,
+                    currentUserID: environment.session.currentUserID
                 ),
                 messageProvider: environment.providers.messages,
                 contactProvider: environment.providers.contacts,
-                conversationService: environment.conversationService
+                conversationService: environment.conversationService,
+                currentUserID: environment.session.currentUserID
             )
             .tabItem {
                 Label("Chats", systemImage: "message")

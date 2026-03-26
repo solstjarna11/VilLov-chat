@@ -16,10 +16,15 @@ final class ConversationListViewModel {
     private(set) var conversations: [Conversation]
 
     private let provider: ConversationProviding
+    private let currentUserID: String?
 
-    init(provider: ConversationProviding) {
+    init(
+        provider: ConversationProviding,
+        currentUserID: String? = nil
+    ) {
         self.provider = provider
-        self.conversations = provider.loadConversations()
+        self.currentUserID = currentUserID
+        self.conversations = provider.loadConversations(for: currentUserID)
     }
 
     var filteredConversations: [Conversation] {
@@ -40,6 +45,7 @@ final class ConversationListViewModel {
     }
 
     func addConversation(_ conversation: Conversation) {
+        guard !conversations.contains(where: { $0.id == conversation.id }) else { return }
         conversations.insert(conversation, at: 0)
     }
 }

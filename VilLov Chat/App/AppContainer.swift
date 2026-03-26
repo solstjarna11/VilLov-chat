@@ -42,6 +42,7 @@ final class AppContainer {
         let keyDirectoryService = KeyDirectoryService(apiClient: apiClient)
         let relayService = RelayService(apiClient: apiClient)
         let conversationService = ConversationService(
+            apiClient: apiClient,
             keyDirectoryService: keyDirectoryService,
             relayService: relayService,
             e2eeEngine: StubE2EEEngine()

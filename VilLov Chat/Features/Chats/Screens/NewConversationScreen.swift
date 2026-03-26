@@ -10,6 +10,7 @@ import Observation
 
 struct NewConversationScreen: View {
     @State private var viewModel: NewConversationViewModel
+    @State private var createdConversation: Conversation?
 
     private let messageProvider: MessageProviding
     private let conversationService: ConversationServicing?
@@ -32,7 +33,7 @@ struct NewConversationScreen: View {
                 if !viewModel.verifiedContacts.isEmpty {
                     Section("Verified") {
                         ForEach(viewModel.verifiedContacts) { contact in
-                            contactNavigationLink(for: contact)
+                            contactRow(for: contact)
                         }
                     }
                 }
@@ -40,7 +41,7 @@ struct NewConversationScreen: View {
                 if !viewModel.otherContacts.isEmpty {
                     Section("Other Contacts") {
                         ForEach(viewModel.otherContacts) { contact in
-                            contactNavigationLink(for: contact)
+                            contactRow(for: contact)
                         }
                     }
                 }
@@ -57,13 +58,7 @@ struct NewConversationScreen: View {
                 )
             }
         }
-    }
-
-    @ViewBuilder
-    private func contactNavigationLink(for contact: Contact) -> some View {
-        let conversation = viewModel.makeConversation(from: contact)
-
-        NavigationLink {
+        .navigationDestination(item: $createdConversation) { conversation in
             ChatScreen(
                 viewModel: ChatViewModel(
                     conversation: conversation,
@@ -71,32 +66,48 @@ struct NewConversationScreen: View {
                     conversationService: conversationService
                 )
             )
+        }
+        .alert(
+            "Could not start conversation",
+            isPresented: Binding(
+                get: { viewModel.errorMessage != nil },
+                set: { if !$0 { viewModel.errorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {
+                viewModel.errorMessage = nil
+            }
+        } message: {
+            Text(viewModel.errorMessage ?? "Unknown error")
+        }
+    }
+
+    @ViewBuilder
+    private func contactRow(for contact: Contact) -> some View {
+        Button {
+            Task {
+                await createConversation(for: contact)
+            }
         } label: {
             ContactRow(contact: contact)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @MainActor
+    private func createConversation(for contact: Contact) async {
+        viewModel.errorMessage = nil
+        viewModel.isCreatingConversation = true
+
+        do {
+            let conversation = try await viewModel.createConversation(from: contact)
+            createdConversation = conversation
+            viewModel.isCreatingConversation = false
+        } catch {
+            viewModel.errorMessage = error.localizedDescription
+            viewModel.isCreatingConversation = false
         }
     }
 }
 
-#Preview("Contacts Available") {
-    NavigationStack {
-        NewConversationScreen(
-            viewModel: NewConversationViewModel(
-                provider: PopulatedContactProvider()
-            ),
-            messageProvider: EmptyMessageProvider(),
-            conversationService: nil
-        )
-    }
-}
 
-#Preview("No Contacts") {
-    NavigationStack {
-        NewConversationScreen(
-            viewModel: NewConversationViewModel(
-                provider: EmptyContactProvider()
-            ),
-            messageProvider: EmptyMessageProvider(),
-            conversationService: nil
-        )
-    }
-}

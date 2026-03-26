@@ -14,17 +14,20 @@ struct ConversationListScreen: View {
     private let messageProvider: MessageProviding
     private let contactProvider: ContactProviding
     private let conversationService: ConversationServicing?
+    private let currentUserID: String?
 
     init(
         viewModel: ConversationListViewModel,
         messageProvider: MessageProviding,
         contactProvider: ContactProviding,
-        conversationService: ConversationServicing? = nil
+        conversationService: ConversationServicing? = nil,
+        currentUserID: String? = nil
     ) {
         _viewModel = State(initialValue: viewModel)
         self.messageProvider = messageProvider
         self.contactProvider = contactProvider
         self.conversationService = conversationService
+        self.currentUserID = currentUserID
     }
 
     var body: some View {
@@ -52,7 +55,9 @@ struct ConversationListScreen: View {
                     NavigationLink {
                         NewConversationScreen(
                             viewModel: NewConversationViewModel(
-                                provider: contactProvider
+                                provider: contactProvider,
+                                conversationService: conversationService,
+                                currentUserID: currentUserID
                             ),
                             messageProvider: messageProvider,
                             conversationService: conversationService
