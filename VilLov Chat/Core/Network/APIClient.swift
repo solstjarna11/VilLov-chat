@@ -122,6 +122,12 @@ final class APIClient {
             do {
                 return try decoder.decode(Response.self, from: data)
             } catch {
+                let rawBody = String(data: data, encoding: .utf8) ?? "<non-utf8 response>"
+                print("API decode failed")
+                print("URL:", request.url?.absoluteString ?? "<unknown>")
+                print("Expected type:", String(describing: Response.self))
+                print("Raw response body:", rawBody)
+                print("Underlying decode error:", error)
                 throw APIError.decodingFailed
             }
         } catch let error as APIError {

@@ -17,6 +17,7 @@ enum Endpoint {
     case sendMessage
     case inbox
     case ackMessage
+    case getOrCreateConversation
 
     var path: String {
         switch self {
@@ -34,6 +35,8 @@ enum Endpoint {
             return "/messages/inbox"
         case .ackMessage:
             return "/messages/ack"
+        case .getOrCreateConversation:
+            return "/conversations/get-or-create"
         }
     }
 }
