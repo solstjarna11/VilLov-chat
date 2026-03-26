@@ -17,7 +17,8 @@ struct MainTabView: View {
                     provider: environment.providers.conversations
                 ),
                 messageProvider: environment.providers.messages,
-                contactProvider: environment.providers.contacts
+                contactProvider: environment.providers.contacts,
+                conversationService: environment.conversationService
             )
             .tabItem {
                 Label("Chats", systemImage: "message")

@@ -12,13 +12,16 @@ struct NewConversationScreen: View {
     @State private var viewModel: NewConversationViewModel
 
     private let messageProvider: MessageProviding
+    private let conversationService: ConversationServicing?
 
     init(
         viewModel: NewConversationViewModel,
-        messageProvider: MessageProviding
+        messageProvider: MessageProviding,
+        conversationService: ConversationServicing? = nil
     ) {
         _viewModel = State(initialValue: viewModel)
         self.messageProvider = messageProvider
+        self.conversationService = conversationService
     }
 
     var body: some View {
@@ -64,7 +67,8 @@ struct NewConversationScreen: View {
             ChatScreen(
                 viewModel: ChatViewModel(
                     conversation: conversation,
-                    provider: messageProvider
+                    provider: messageProvider,
+                    conversationService: conversationService
                 )
             )
         } label: {
@@ -79,7 +83,8 @@ struct NewConversationScreen: View {
             viewModel: NewConversationViewModel(
                 provider: PopulatedContactProvider()
             ),
-            messageProvider: EmptyMessageProvider()
+            messageProvider: EmptyMessageProvider(),
+            conversationService: nil
         )
     }
 }
@@ -90,7 +95,8 @@ struct NewConversationScreen: View {
             viewModel: NewConversationViewModel(
                 provider: EmptyContactProvider()
             ),
-            messageProvider: EmptyMessageProvider()
+            messageProvider: EmptyMessageProvider(),
+            conversationService: nil
         )
     }
 }

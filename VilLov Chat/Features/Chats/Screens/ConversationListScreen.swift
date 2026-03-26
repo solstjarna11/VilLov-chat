@@ -13,15 +13,18 @@ struct ConversationListScreen: View {
 
     private let messageProvider: MessageProviding
     private let contactProvider: ContactProviding
+    private let conversationService: ConversationServicing?
 
     init(
         viewModel: ConversationListViewModel,
         messageProvider: MessageProviding,
-        contactProvider: ContactProviding
+        contactProvider: ContactProviding,
+        conversationService: ConversationServicing? = nil
     ) {
         _viewModel = State(initialValue: viewModel)
         self.messageProvider = messageProvider
         self.contactProvider = contactProvider
+        self.conversationService = conversationService
     }
 
     var body: some View {
@@ -33,7 +36,8 @@ struct ConversationListScreen: View {
                     ChatScreen(
                         viewModel: ChatViewModel(
                             conversation: conversation,
-                            provider: messageProvider
+                            provider: messageProvider,
+                            conversationService: conversationService
                         )
                     )
                 } label: {
@@ -50,7 +54,8 @@ struct ConversationListScreen: View {
                             viewModel: NewConversationViewModel(
                                 provider: contactProvider
                             ),
-                            messageProvider: messageProvider
+                            messageProvider: messageProvider,
+                            conversationService: conversationService
                         )
                     } label: {
                         Image(systemName: "square.and.pencil")
@@ -77,7 +82,8 @@ struct ConversationListScreen: View {
             provider: PopulatedConversationProvider()
         ),
         messageProvider: EmptyMessageProvider(),
-        contactProvider: EmptyContactProvider()
+        contactProvider: EmptyContactProvider(),
+        conversationService: nil
     )
 }
 
@@ -87,6 +93,7 @@ struct ConversationListScreen: View {
             provider: EmptyConversationProvider()
         ),
         messageProvider: EmptyMessageProvider(),
-        contactProvider: EmptyContactProvider()
+        contactProvider: EmptyContactProvider(),
+        conversationService: nil
     )
 }

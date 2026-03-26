@@ -22,7 +22,7 @@ struct RootView: View {
                     }
 
             case .unauthenticated:
-                WelcomeScreen()
+                WelcomeScreen(environment: environment)
 
             case .authenticated:
                 MainTabView(environment: environment)

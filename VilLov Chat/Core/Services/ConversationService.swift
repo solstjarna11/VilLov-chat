@@ -8,7 +8,7 @@
 
 import Foundation
 
-final class ConversationService {
+final class ConversationService: ConversationServicing {
     private let keyDirectoryService: KeyDirectoryService
     private let relayService: RelayService
     private let e2eeEngine: E2EEEngine

@@ -54,7 +54,8 @@ final class NewConversationViewModel {
             lastActivity: Date(),
             unreadCount: 0,
             trustState: contact.trustState,
-            disappearingEnabled: false
+            disappearingEnabled: false,
+            recipientUserID: contact.userID
         )
     }
 }

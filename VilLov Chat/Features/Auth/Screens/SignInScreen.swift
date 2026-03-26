@@ -7,9 +7,18 @@
 
 
 import SwiftUI
+import Observation
 
 struct SignInScreen: View {
+    @State private var viewModel: SignInViewModel
+
+    init(viewModel: SignInViewModel) {
+        _viewModel = State(initialValue: viewModel)
+    }
+
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         VStack(alignment: .leading, spacing: 24) {
             Text("Sign In")
                 .font(.largeTitle)
@@ -27,17 +36,42 @@ struct SignInScreen: View {
                     .font(.body)
             }
 
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+            }
+
             Spacer()
 
-            NavigationLink {
-                PasskeySetupScreen(mode: .authentication)
+            Button {
+                viewModel.signIn()
             } label: {
-                Text("Continue with Passkey")
-                    .frame(maxWidth: .infinity)
+                Group {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text("Continue with Passkey")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
             }
             .buttonStyle(.borderedProminent)
+            .disabled(viewModel.isLoading)
         }
         .padding(32)
         .navigationTitle("Sign In")
+    }
+}
+
+#Preview {
+    NavigationStack {
+        SignInScreen(
+            viewModel: SignInViewModel(
+                authService: PreviewAuthService.make(),
+                session: AppSession(tokenStore: AuthTokenStore())
+            )
+        )
     }
 }
