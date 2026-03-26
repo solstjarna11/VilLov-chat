@@ -7,8 +7,7 @@
 
 import Foundation
 
-enum ContactTrustState: Hashable {
+enum ContactTrustState: String, Codable, CaseIterable, Hashable {
     case verified
     case unverified
-    case needsAttention
 }
