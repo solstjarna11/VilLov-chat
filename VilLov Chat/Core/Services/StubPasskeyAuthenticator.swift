@@ -16,13 +16,16 @@ struct StubPasskeyAuthenticator: PasskeyAuthenticating {
         deviceName: String?,
         platform: String?
     ) async throws -> PasskeyFinishRequest {
-        PasskeyFinishRequest(
+        let resolvedUserHandle = userHandle ?? challenge.userID ?? "user_alice"
+        let credentialID = "credential-\(resolvedUserHandle)-primary"
+
+        return PasskeyFinishRequest(
             challenge: challenge.challenge,
-            credentialID: "stub-credential-id",
-            userHandle: userHandle ?? challenge.userID,
-            deviceID: deviceID,
-            deviceName: deviceName,
-            platform: platform,
+            credentialID: credentialID,
+            userHandle: resolvedUserHandle,
+            deviceID: deviceID ?? "device-\(resolvedUserHandle)-iphone",
+            deviceName: deviceName ?? "\(resolvedUserHandle) iPhone",
+            platform: platform ?? "ios",
             transports: "internal",
             clientDataJSON: "stub-client-data",
             authenticatorData: "stub-authenticator-data",

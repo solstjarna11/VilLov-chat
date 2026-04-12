@@ -39,16 +39,21 @@ final class AuthService {
         deviceName: String? = nil,
         platform: String? = "ios"
     ) async throws -> String? {
+        let resolvedDeviceID = deviceID ?? userHandle.map { "device-\($0)-iphone" }
+
         let beginResponse: PasskeyBeginResponse = try await apiClient.post(
             .passkeyLoginBegin,
-            body: PasskeyBeginRequest(),
+            body: PasskeyBeginRequest(
+                userHandle: userHandle,
+                deviceID: resolvedDeviceID
+            ),
             authenticated: false
         )
 
         let finishRequest = try await authenticator.signChallenge(
             beginResponse,
             userHandle: userHandle,
-            deviceID: deviceID,
+            deviceID: resolvedDeviceID,
             deviceName: deviceName,
             platform: platform
         )
