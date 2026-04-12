@@ -5,7 +5,7 @@
 //  Created by Lovísa Sól on 26.3.2026.
 //
 // This is the composition root. Right now it only owns app-wide objects. Later it will own services, network, crypto, and live repositories.
-
+//
 
 import Foundation
 
@@ -18,6 +18,8 @@ final class AppContainer {
     let apiClient: APIClient
 
     let authService: AuthService
+    let contactService: ContactService
+    let conversationDirectoryService: ConversationDirectoryService
     let keyDirectoryService: KeyDirectoryService
     let relayService: RelayService
     let conversationService: ConversationService
@@ -39,6 +41,8 @@ final class AppContainer {
             authenticator: authenticator
         )
 
+        let contactService = ContactService(apiClient: apiClient)
+        let conversationDirectoryService = ConversationDirectoryService(apiClient: apiClient)
         let keyDirectoryService = KeyDirectoryService(apiClient: apiClient)
         let relayService = RelayService(apiClient: apiClient)
         let conversationService = ConversationService(
@@ -53,6 +57,8 @@ final class AppContainer {
         self.tokenStore = tokenStore
         self.apiClient = apiClient
         self.authService = authService
+        self.contactService = contactService
+        self.conversationDirectoryService = conversationDirectoryService
         self.keyDirectoryService = keyDirectoryService
         self.relayService = relayService
         self.conversationService = conversationService
@@ -63,6 +69,8 @@ final class AppContainer {
             providers: providers,
             authService: authService,
             conversationService: conversationService,
+            contactService: contactService,
+            conversationDirectoryService: conversationDirectoryService,
             keyDirectoryService: keyDirectoryService,
             relayService: relayService
         )

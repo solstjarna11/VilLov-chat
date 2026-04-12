@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
-
 import Foundation
 import Observation
 
@@ -14,22 +13,19 @@ import Observation
 final class NewConversationViewModel {
     var searchText = ""
     var isCreatingConversation = false
+    var isLoading = false
     var errorMessage: String?
-    private(set) var contacts: [Contact]
+    private(set) var contacts: [Contact] = []
 
-    private let provider: ContactProviding
-    private let conversationService: ConversationServicing?
-    private let currentUserID: String?
+    private let contactService: ContactService
+    private let conversationService: ConversationServicing
 
     init(
-        provider: ContactProviding,
-        conversationService: ConversationServicing? = nil,
-        currentUserID: String? = nil
+        contactService: ContactService,
+        conversationService: ConversationServicing
     ) {
-        self.provider = provider
+        self.contactService = contactService
         self.conversationService = conversationService
-        self.currentUserID = currentUserID
-        self.contacts = provider.loadContacts(for: currentUserID)
     }
 
     var filteredContacts: [Contact] {
@@ -56,15 +52,39 @@ final class NewConversationViewModel {
         !filteredContacts.isEmpty
     }
 
-    func createConversation(from contact: Contact) async throws -> Conversation {
-        guard let conversationService else {
-            throw NSError(
-                domain: "NewConversationViewModel",
-                code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "Conversation service is unavailable."]
-            )
-        }
+    func load() {
+        guard !isLoading else { return }
 
+        isLoading = true
+        errorMessage = nil
+
+        Task {
+            do {
+                let apiContacts = try await contactService.fetchContacts()
+
+                let mapped = apiContacts.map {
+                    Contact(
+                        id: UUID(),
+                        name: $0.displayName,
+                        trustState: .unverified,
+                        userID: $0.userID
+                    )
+                }
+
+                await MainActor.run {
+                    self.contacts = mapped.sorted { $0.name < $1.name }
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.isLoading = false
+                }
+            }
+        }
+    }
+
+    func createConversation(from contact: Contact) async throws -> Conversation {
         guard let recipientUserID = contact.userID else {
             throw NSError(
                 domain: "NewConversationViewModel",

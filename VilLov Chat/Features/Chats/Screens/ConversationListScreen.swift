@@ -12,22 +12,19 @@ struct ConversationListScreen: View {
     @State private var viewModel: ConversationListViewModel
 
     private let messageProvider: MessageProviding
-    private let contactProvider: ContactProviding
-    private let conversationService: ConversationServicing?
-    private let currentUserID: String?
+    private let contactService: ContactService
+    private let conversationService: ConversationServicing
 
     init(
         viewModel: ConversationListViewModel,
         messageProvider: MessageProviding,
-        contactProvider: ContactProviding,
-        conversationService: ConversationServicing? = nil,
-        currentUserID: String? = nil
+        contactService: ContactService,
+        conversationService: ConversationServicing
     ) {
         _viewModel = State(initialValue: viewModel)
         self.messageProvider = messageProvider
-        self.contactProvider = contactProvider
+        self.contactService = contactService
         self.conversationService = conversationService
-        self.currentUserID = currentUserID
     }
 
     var body: some View {
@@ -55,9 +52,8 @@ struct ConversationListScreen: View {
                     NavigationLink {
                         NewConversationScreen(
                             viewModel: NewConversationViewModel(
-                                provider: contactProvider,
-                                conversationService: conversationService,
-                                currentUserID: currentUserID
+                                contactService: contactService,
+                                conversationService: conversationService
                             ),
                             messageProvider: messageProvider,
                             conversationService: conversationService
@@ -69,7 +65,9 @@ struct ConversationListScreen: View {
                 }
             }
             .overlay {
-                if !viewModel.hasResults {
+                if viewModel.isLoading {
+                    ProgressView("Loading conversations...")
+                } else if !viewModel.hasResults {
                     ContentUnavailableView(
                         "No Conversations",
                         systemImage: "message",
@@ -77,28 +75,22 @@ struct ConversationListScreen: View {
                     )
                 }
             }
+            .alert(
+                "Could not load conversations",
+                isPresented: Binding(
+                    get: { viewModel.errorMessage != nil },
+                    set: { if !$0 { viewModel.errorMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {
+                    viewModel.errorMessage = nil
+                }
+            } message: {
+                Text(viewModel.errorMessage ?? "Unknown error")
+            }
+            .task {
+                viewModel.load()
+            }
         }
     }
-}
-
-#Preview("Populated Conversations") {
-    ConversationListScreen(
-        viewModel: ConversationListViewModel(
-            provider: PopulatedConversationProvider()
-        ),
-        messageProvider: EmptyMessageProvider(),
-        contactProvider: EmptyContactProvider(),
-        conversationService: nil
-    )
-}
-
-#Preview("Empty Conversations") {
-    ConversationListScreen(
-        viewModel: ConversationListViewModel(
-            provider: EmptyConversationProvider()
-        ),
-        messageProvider: EmptyMessageProvider(),
-        contactProvider: EmptyContactProvider(),
-        conversationService: nil
-    )
 }

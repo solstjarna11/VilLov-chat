@@ -14,6 +14,8 @@ struct AppEnvironment {
 
     let authService: AuthService
     let conversationService: ConversationServicing
+    let contactService: ContactService
+    let conversationDirectoryService: ConversationDirectoryService
     let keyDirectoryService: KeyDirectoryService
     let relayService: RelayService
 
@@ -22,6 +24,8 @@ struct AppEnvironment {
         providers: AppProviders,
         authService: AuthService,
         conversationService: ConversationServicing,
+        contactService: ContactService,
+        conversationDirectoryService: ConversationDirectoryService,
         keyDirectoryService: KeyDirectoryService,
         relayService: RelayService
     ) {
@@ -29,6 +33,8 @@ struct AppEnvironment {
         self.providers = providers
         self.authService = authService
         self.conversationService = conversationService
+        self.contactService = contactService
+        self.conversationDirectoryService = conversationDirectoryService
         self.keyDirectoryService = keyDirectoryService
         self.relayService = relayService
     }
