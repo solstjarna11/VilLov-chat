@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
-
 import Foundation
 import Observation
 
@@ -13,18 +12,22 @@ import Observation
 @Observable
 final class ConversationListViewModel {
     var searchText = ""
-    private(set) var conversations: [Conversation]
+    var errorMessage: String?
+    var isLoading = false
+    private(set) var conversations: [Conversation] = []
 
-    private let provider: ConversationProviding
-    private let currentUserID: String?
+    private let contactService: ContactService
+    private let conversationDirectoryService: ConversationDirectoryService
+    private let currentUserID: String
 
     init(
-        provider: ConversationProviding,
-        currentUserID: String? = nil
+        contactService: ContactService,
+        conversationDirectoryService: ConversationDirectoryService,
+        currentUserID: String
     ) {
-        self.provider = provider
+        self.contactService = contactService
+        self.conversationDirectoryService = conversationDirectoryService
         self.currentUserID = currentUserID
-        self.conversations = provider.loadConversations(for: currentUserID)
     }
 
     var filteredConversations: [Conversation] {
@@ -42,6 +45,64 @@ final class ConversationListViewModel {
 
     var hasResults: Bool {
         !filteredConversations.isEmpty
+    }
+
+    func load() {
+        guard !isLoading else { return }
+
+        isLoading = true
+        errorMessage = nil
+
+        Task {
+            do {
+                let apiContacts = try await contactService.fetchContacts()
+                let apiConversations = try await conversationDirectoryService.fetchConversations()
+
+                let contactsByUserID = Dictionary(
+                    uniqueKeysWithValues: apiContacts.map {
+                        (
+                            $0.userID,
+                            Contact(
+                                id: UUID(),
+                                name: $0.displayName,
+                                trustState: .unverified,
+                                userID: $0.userID
+                            )
+                        )
+                    }
+                )
+
+                let mapped = apiConversations.map { apiConversation in
+                    let otherUserID =
+                        apiConversation.participantAUserID == currentUserID
+                        ? apiConversation.participantBUserID
+                        : apiConversation.participantAUserID
+
+                    let otherContact = contactsByUserID[otherUserID]
+
+                    return Conversation(
+                        id: apiConversation.conversationID,
+                        title: otherContact?.name ?? otherUserID,
+                        lastMessagePreview: "",
+                        lastActivity: apiConversation.createdAt,
+                        unreadCount: 0,
+                        trustState: otherContact?.trustState ?? .unverified,
+                        disappearingEnabled: false,
+                        recipientUserID: otherUserID
+                    )
+                }
+
+                await MainActor.run {
+                    self.conversations = mapped.sorted { $0.lastActivity > $1.lastActivity }
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.isLoading = false
+                }
+            }
+        }
     }
 
     func addConversation(_ conversation: Conversation) {

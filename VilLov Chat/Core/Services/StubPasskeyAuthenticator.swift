@@ -11,14 +11,25 @@ import Foundation
 struct StubPasskeyAuthenticator: PasskeyAuthenticating {
     func signChallenge(
         _ challenge: PasskeyBeginResponse,
-        userHandle: String?
+        userHandle: String?,
+        deviceID: String?,
+        deviceName: String?,
+        platform: String?
     ) async throws -> PasskeyFinishRequest {
-        PasskeyFinishRequest(
-            credentialID: "stub-credential-id",
+        let resolvedUserHandle = userHandle ?? challenge.userID ?? "user_alice"
+        let credentialID = "credential-\(resolvedUserHandle)-primary"
+
+        return PasskeyFinishRequest(
+            challenge: challenge.challenge,
+            credentialID: credentialID,
+            userHandle: resolvedUserHandle,
+            deviceID: deviceID ?? "device-\(resolvedUserHandle)-iphone",
+            deviceName: deviceName ?? "\(resolvedUserHandle) iPhone",
+            platform: platform ?? "ios",
+            transports: "internal",
             clientDataJSON: "stub-client-data",
             authenticatorData: "stub-authenticator-data",
-            signature: "stub-signature",
-            userHandle: userHandle ?? challenge.userID
+            signature: "stub-signature"
         )
     }
 }

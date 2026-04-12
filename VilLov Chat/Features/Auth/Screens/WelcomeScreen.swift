@@ -64,24 +64,22 @@ struct WelcomeScreen: View {
 }
 
 #Preview {
+    let tokenStore = AuthTokenStore()
+    let apiClient = APIClient(
+        baseURL: URL(string: "http://127.0.0.1:8000")!,
+        tokenStore: tokenStore
+    )
+
     WelcomeScreen(
         environment: AppEnvironment(
-            session: AppSession(tokenStore: AuthTokenStore()),
+            session: AppSession(tokenStore: tokenStore),
             providers: AppProviders.mock,
             authService: PreviewAuthService.make(),
             conversationService: PreviewConversationService(),
-            keyDirectoryService: KeyDirectoryService(
-                apiClient: APIClient(
-                    baseURL: URL(string: "http://127.0.0.1:8000")!,
-                    tokenStore: AuthTokenStore()
-                )
-            ),
-            relayService: RelayService(
-                apiClient: APIClient(
-                    baseURL: URL(string: "http://127.0.0.1:8000")!,
-                    tokenStore: AuthTokenStore()
-                )
-            )
+            contactService: ContactService(apiClient: apiClient),
+            conversationDirectoryService: ConversationDirectoryService(apiClient: apiClient),
+            keyDirectoryService: KeyDirectoryService(apiClient: apiClient),
+            relayService: RelayService(apiClient: apiClient)
         )
     )
 }

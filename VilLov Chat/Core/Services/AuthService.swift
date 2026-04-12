@@ -10,7 +10,10 @@ import Foundation
 protocol PasskeyAuthenticating {
     func signChallenge(
         _ challenge: PasskeyBeginResponse,
-        userHandle: String?
+        userHandle: String?,
+        deviceID: String?,
+        deviceName: String?,
+        platform: String?
     ) async throws -> PasskeyFinishRequest
 }
 
@@ -30,20 +33,33 @@ final class AuthService {
         self.authenticator = authenticator
     }
 
-    func signInWithPasskey(userHandle: String? = nil) async throws -> String? {
+    func signInWithPasskey(
+        userHandle: String? = nil,
+        deviceID: String? = nil,
+        deviceName: String? = nil,
+        platform: String? = "ios"
+    ) async throws -> String? {
+        let resolvedDeviceID = deviceID ?? userHandle.map { "device-\($0)-iphone" }
+
         let beginResponse: PasskeyBeginResponse = try await apiClient.post(
-            .passkeyBegin,
-            body: PasskeyBeginRequest(),
+            .passkeyLoginBegin,
+            body: PasskeyBeginRequest(
+                userHandle: userHandle,
+                deviceID: resolvedDeviceID
+            ),
             authenticated: false
         )
 
         let finishRequest = try await authenticator.signChallenge(
             beginResponse,
-            userHandle: userHandle
+            userHandle: userHandle,
+            deviceID: resolvedDeviceID,
+            deviceName: deviceName,
+            platform: platform
         )
 
         let token: SessionToken = try await apiClient.post(
-            .passkeyFinish,
+            .passkeyLoginFinish,
             body: finishRequest,
             authenticated: false
         )

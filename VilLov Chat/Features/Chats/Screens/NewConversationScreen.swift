@@ -13,12 +13,12 @@ struct NewConversationScreen: View {
     @State private var createdConversation: Conversation?
 
     private let messageProvider: MessageProviding
-    private let conversationService: ConversationServicing?
+    private let conversationService: ConversationServicing
 
     init(
         viewModel: NewConversationViewModel,
         messageProvider: MessageProviding,
-        conversationService: ConversationServicing? = nil
+        conversationService: ConversationServicing
     ) {
         _viewModel = State(initialValue: viewModel)
         self.messageProvider = messageProvider
@@ -50,7 +50,9 @@ struct NewConversationScreen: View {
         .navigationTitle("New Conversation")
         .searchable(text: $viewModel.searchText, prompt: "Search contacts")
         .overlay {
-            if !viewModel.hasResults {
+            if viewModel.isLoading {
+                ProgressView("Loading contacts...")
+            } else if !viewModel.hasResults {
                 ContentUnavailableView(
                     "No Contacts Found",
                     systemImage: "person.crop.circle.badge.exclamationmark",
@@ -79,6 +81,9 @@ struct NewConversationScreen: View {
             }
         } message: {
             Text(viewModel.errorMessage ?? "Unknown error")
+        }
+        .task {
+            viewModel.load()
         }
     }
 
@@ -109,5 +114,3 @@ struct NewConversationScreen: View {
         }
     }
 }
-
-
