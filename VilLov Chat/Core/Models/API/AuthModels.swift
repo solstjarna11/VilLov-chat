@@ -23,21 +23,41 @@ struct PasskeyBeginRequest: Codable {
     }
 }
 
-struct PasskeyBeginResponse: Codable, Equatable {
+struct PasskeyRegistrationBeginResponse: Codable, Equatable {
+    let challenge: String
+    let relyingPartyID: String
+    let userID: String
+    let userName: String
+    let displayName: String
+}
+
+struct PasskeyAssertionBeginResponse: Codable, Equatable {
     let challenge: String
     let relyingPartyID: String
     let userID: String?
 }
 
-struct PasskeyFinishRequest: Codable, Equatable {
+struct PasskeyRegistrationFinishRequest: Codable, Equatable {
     let challenge: String
     let credentialID: String
     let userHandle: String?
     let deviceID: String?
     let deviceName: String?
     let platform: String?
-    let transports: String?
-    let clientDataJSON: String?
-    let authenticatorData: String?
-    let signature: String?
+    let transports: [String]?
+    let clientDataJSON: String
+    let attestationObject: String
+}
+
+struct PasskeyAssertionFinishRequest: Codable, Equatable {
+    let challenge: String
+    let credentialID: String
+    let userHandle: String?
+    let deviceID: String?
+    let deviceName: String?
+    let platform: String?
+    let transports: [String]?
+    let clientDataJSON: String
+    let authenticatorData: String
+    let signature: String
 }
