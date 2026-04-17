@@ -15,6 +15,7 @@ final class AppSession {
     var currentUserID: String?
     var isPasskeyConfigured: Bool = false
     var rememberedAccountName: String?
+    var rememberedUserHandle: String?
 
     private let tokenStore: AuthTokenStore
 
@@ -32,6 +33,7 @@ final class AppSession {
         isPasskeyConfigured: Bool = true
     ) {
         self.currentUserID = userID
+        self.rememberedUserHandle = userID
         self.rememberedAccountName = rememberedAccountName
         self.isPasskeyConfigured = isPasskeyConfigured
         self.state = .authenticated
@@ -40,7 +42,6 @@ final class AppSession {
     func signOut() {
         tokenStore.clear()
         currentUserID = nil
-        rememberedAccountName = nil
         isPasskeyConfigured = false
         state = .unauthenticated
     }

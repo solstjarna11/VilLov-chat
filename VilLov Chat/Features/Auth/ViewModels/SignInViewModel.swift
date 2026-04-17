@@ -33,11 +33,17 @@ final class SignInViewModel {
     }
 
     func signInWithDefaultPasskey() {
-        signIn(using: nil, rememberedName: session.rememberedAccountName)
+        signIn(
+            using: session.rememberedUserHandle,
+            rememberedName: session.rememberedAccountName
+        )
     }
 
     func signInWithRememberedAccount() {
-        signIn(using: session.currentUserID, rememberedName: session.rememberedAccountName)
+        signIn(
+            using: session.rememberedUserHandle,
+            rememberedName: session.rememberedAccountName
+        )
     }
 
     func signInWithSelectedDevAccount() {
