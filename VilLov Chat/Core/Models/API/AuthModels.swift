@@ -16,10 +16,16 @@ struct SessionToken: Codable, Equatable {
 struct PasskeyBeginRequest: Codable {
     let userHandle: String?
     let deviceID: String?
+    let displayName: String?
 
-    init(userHandle: String? = nil, deviceID: String? = nil) {
+    init(
+        userHandle: String? = nil,
+        deviceID: String? = nil,
+        displayName: String? = nil
+    ) {
         self.userHandle = userHandle
         self.deviceID = deviceID
+        self.displayName = displayName
     }
 }
 

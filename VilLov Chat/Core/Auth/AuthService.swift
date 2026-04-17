@@ -43,6 +43,7 @@ final class AuthService {
 
     func registerWithPasskey(
         userHandle: String,
+        displayName: String? = nil,
         deviceID: String? = nil,
         deviceName: String? = nil,
         platform: String? = "ios"
@@ -51,7 +52,11 @@ final class AuthService {
 
         let begin: PasskeyRegistrationBeginResponse = try await apiClient.post(
             .passkeyRegisterBegin,
-            body: PasskeyBeginRequest(userHandle: userHandle, deviceID: resolvedDeviceID),
+            body: PasskeyBeginRequest(
+                userHandle: userHandle,
+                deviceID: resolvedDeviceID,
+                displayName: displayName
+            ),
             authenticated: false
         )
 
@@ -83,7 +88,11 @@ final class AuthService {
 
         let begin: PasskeyAssertionBeginResponse = try await apiClient.post(
             .passkeyLoginBegin,
-            body: PasskeyBeginRequest(userHandle: userHandle, deviceID: resolvedDeviceID),
+            body: PasskeyBeginRequest(
+                userHandle: userHandle,
+                deviceID: resolvedDeviceID,
+                displayName: nil
+            ),
             authenticated: false
         )
 

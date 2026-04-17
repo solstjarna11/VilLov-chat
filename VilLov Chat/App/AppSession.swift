@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 26.3.2026.
 //
 
-
 import Foundation
 import Observation
 
@@ -41,6 +40,7 @@ final class AppSession {
     func signOut() {
         tokenStore.clear()
         currentUserID = nil
+        rememberedAccountName = nil
         isPasskeyConfigured = false
         state = .unauthenticated
     }

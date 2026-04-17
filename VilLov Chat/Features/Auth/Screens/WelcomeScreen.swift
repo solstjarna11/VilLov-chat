@@ -49,7 +49,7 @@ struct WelcomeScreen: View {
                     .buttonStyle(.borderedProminent)
 
                     NavigationLink {
-                        CreateAccountScreen()
+                        CreateAccountScreen(environment: environment)
                     } label: {
                         Text("Create Account")
                             .frame(maxWidth: .infinity)
@@ -66,7 +66,7 @@ struct WelcomeScreen: View {
 #Preview {
     let tokenStore = AuthTokenStore()
     let apiClient = APIClient(
-        baseURL: URL(string: "http://127.0.0.1:8000")!,
+        baseURL: URL(string: "https://auth.villovchat.com")!,
         tokenStore: tokenStore
     )
 
