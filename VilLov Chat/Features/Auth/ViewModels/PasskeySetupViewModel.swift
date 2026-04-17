@@ -1,10 +1,3 @@
-//
-//  PasskeySetupViewModel.swift
-//  VilLov Chat
-//
-//  Created by Lovísa Sól on 17.4.2026.
-//
-
 import Foundation
 import Observation
 
@@ -24,19 +17,22 @@ final class PasskeySetupViewModel {
     private let session: AppSession
     private let userHandle: String?
     private let rememberedAccountName: String?
+    private let rememberedAccountsStore: RememberedAccountsStore
 
     init(
         mode: Mode,
         authService: AuthService,
         session: AppSession,
         userHandle: String? = nil,
-        rememberedAccountName: String? = nil
+        rememberedAccountName: String? = nil,
+        rememberedAccountsStore: RememberedAccountsStore? = nil
     ) {
         self.mode = mode
         self.authService = authService
         self.session = session
         self.userHandle = userHandle
         self.rememberedAccountName = rememberedAccountName
+        self.rememberedAccountsStore = rememberedAccountsStore ?? RememberedAccountsStore()
     }
 
     func performPasskeyFlow() async {
@@ -50,7 +46,12 @@ final class PasskeySetupViewModel {
 
             switch mode {
             case .registration:
-                let registrationUserHandle = userHandle ?? "user_alice"
+                guard let registrationUserHandle = userHandle, !registrationUserHandle.isEmpty else {
+                    errorMessage = "Missing account username."
+                    isWorking = false
+                    return
+                }
+
                 resolvedUserHandle = try await authService.registerWithPasskey(
                     userHandle: registrationUserHandle,
                     displayName: rememberedAccountName
@@ -62,9 +63,19 @@ final class PasskeySetupViewModel {
                 )
             }
 
+            let finalUserHandle = resolvedUserHandle ?? userHandle
+            let finalDisplayName = rememberedAccountName ?? finalUserHandle ?? "Unknown"
+
+            if let finalUserHandle {
+                rememberedAccountsStore.upsertAccount(
+                    userHandle: finalUserHandle,
+                    displayName: finalDisplayName
+                )
+            }
+
             session.completeAuthentication(
-                userID: resolvedUserHandle,
-                rememberedAccountName: rememberedAccountName ?? resolvedUserHandle,
+                userID: finalUserHandle,
+                rememberedAccountName: finalDisplayName,
                 isPasskeyConfigured: true
             )
 

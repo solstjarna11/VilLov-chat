@@ -113,7 +113,10 @@ final class DevelopmentPasskeyAuthenticator: PasskeyAuthenticating {
         deviceName: String?,
         platform: String?
     ) async throws -> PasskeyAssertionFinishRequest {
-        let resolvedUserHandle = userHandle ?? challenge.userID ?? "user_alice"
+        guard let resolvedUserHandle = userHandle ?? challenge.userID else {
+            throw DevelopmentPasskeyError.missingCredential
+        }
+
         guard Data(base64URLEncoded: challenge.challenge) != nil else {
             throw DevelopmentPasskeyError.invalidChallenge
         }

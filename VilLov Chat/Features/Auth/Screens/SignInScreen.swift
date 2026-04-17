@@ -1,11 +1,3 @@
-//
-//  SignInScreen.swift
-//  VilLov Chat
-//
-//  Created by Lovísa Sól on 25.3.2026.
-//
-
-
 import SwiftUI
 import Observation
 
@@ -61,7 +53,7 @@ struct SignInScreen: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(viewModel.isLoading)
+                .disabled(viewModel.isLoading || !viewModel.hasRememberedAccounts)
 
                 if let rememberedName = viewModel.rememberedAccountName {
                     Button {
@@ -75,13 +67,14 @@ struct SignInScreen: View {
                 }
 
                 Button {
+                    viewModel.refreshRememberedAccounts()
                     viewModel.showsAccountPicker = true
                 } label: {
                     Text("Use another account")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
-                .disabled(viewModel.isLoading)
+                .disabled(viewModel.isLoading || !viewModel.hasRememberedAccounts)
             }
         }
         .padding(32)
@@ -92,9 +85,9 @@ struct SignInScreen: View {
                     Text("Choose an account to continue.")
                         .foregroundStyle(.secondary)
 
-                    Picker("Account", selection: $viewModel.selectedDevAccount) {
-                        ForEach(DevAuthAccount.allCases) { account in
-                            Text(account.displayName).tag(account)
+                    Picker("Account", selection: $viewModel.selectedAccount) {
+                        ForEach(viewModel.rememberedAccounts) { account in
+                            Text(account.displayName).tag(Optional(account))
                         }
                     }
                     #if os(macOS)
@@ -114,29 +107,22 @@ struct SignInScreen: View {
 
                         Button {
                             viewModel.showsAccountPicker = false
-                            viewModel.signInWithSelectedDevAccount()
+                            viewModel.signInWithSelectedAccount()
                         } label: {
                             Text("Continue")
                                 .frame(minWidth: 100)
                         }
                         .buttonStyle(.borderedProminent)
+                        .disabled(viewModel.selectedAccount == nil)
                     }
                 }
                 .padding(24)
-                .frame(minWidth: 420, minHeight: 220)
+                .frame(minWidth: 420, minHeight: 260)
                 .navigationTitle("Use Another Account")
             }
         }
-    }
-}
-
-#Preview {
-    NavigationStack {
-        SignInScreen(
-            viewModel: SignInViewModel(
-                authService: PreviewAuthService.make(),
-                session: AppSession(tokenStore: AuthTokenStore())
-            )
-        )
+        .onAppear {
+            viewModel.refreshRememberedAccounts()
+        }
     }
 }
