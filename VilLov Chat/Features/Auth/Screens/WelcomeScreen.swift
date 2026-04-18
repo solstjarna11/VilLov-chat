@@ -39,7 +39,7 @@ struct WelcomeScreen: View {
                         SignInScreen(
                             viewModel: SignInViewModel(
                                 authService: environment.authService,
-                                session: environment.session
+                                session: environment.session, keyDirectoryService: environment.keyDirectoryService
                             )
                         )
                     } label: {
@@ -63,23 +63,4 @@ struct WelcomeScreen: View {
     }
 }
 
-#Preview {
-    let tokenStore = AuthTokenStore()
-    let apiClient = APIClient(
-        baseURL: URL(string: "https://auth.villovchat.com")!,
-        tokenStore: tokenStore
-    )
 
-    WelcomeScreen(
-        environment: AppEnvironment(
-            session: AppSession(tokenStore: tokenStore),
-            providers: AppProviders.mock,
-            authService: PreviewAuthService.make(),
-            conversationService: PreviewConversationService(),
-            contactService: ContactService(apiClient: apiClient),
-            conversationDirectoryService: ConversationDirectoryService(apiClient: apiClient),
-            keyDirectoryService: KeyDirectoryService(apiClient: apiClient),
-            relayService: RelayService(apiClient: apiClient)
-        )
-    )
-}

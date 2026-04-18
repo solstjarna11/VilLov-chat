@@ -1,3 +1,11 @@
+//
+//  SignInViewModel.swift
+//  VilLov Chat
+//
+//  Created by Lovísa Sól on 17.4.2026.
+//
+
+
 import Foundation
 import Observation
 
@@ -13,19 +21,23 @@ final class SignInViewModel {
     private let authService: AuthService
     private let session: AppSession
     private let rememberedAccountsStore: RememberedAccountsStore
+    private let keyDirectoryService: KeyDirectoryService
 
     init(
         authService: AuthService,
         session: AppSession,
-        rememberedAccountsStore: RememberedAccountsStore? = nil
+        rememberedAccountsStore: RememberedAccountsStore? = nil,
+        keyDirectoryService: KeyDirectoryService
     ) {
         self.authService = authService
         self.session = session
         self.rememberedAccountsStore = rememberedAccountsStore ?? RememberedAccountsStore()
+        self.keyDirectoryService = keyDirectoryService
+
         self.rememberedAccounts = self.rememberedAccountsStore.loadAccounts()
         self.selectedAccount = self.rememberedAccounts.first
     }
-    
+
     var rememberedAccountName: String? {
         rememberedAccounts.first?.displayName
     }
@@ -70,17 +82,19 @@ final class SignInViewModel {
             do {
                 let resolvedUserHandle = try await authService.signInWithPasskey(userHandle: userHandle)
 
+                let finalUserID = resolvedUserHandle ?? userHandle
+                let finalDisplayName = rememberedName ?? finalUserID ?? "Unknown"
+
+                if let finalUserID {
+                    rememberedAccountsStore.upsertAccount(
+                        userHandle: finalUserID,
+                        displayName: finalDisplayName
+                    )
+
+                    try await keyDirectoryService.uploadDevelopmentKeyBundleIfNeeded(for: finalUserID)
+                }
+
                 await MainActor.run {
-                    let finalUserID = resolvedUserHandle ?? userHandle
-                    let finalDisplayName = rememberedName ?? finalUserID ?? "Unknown"
-
-                    if let finalUserID {
-                        rememberedAccountsStore.upsertAccount(
-                            userHandle: finalUserID,
-                            displayName: finalDisplayName
-                        )
-                    }
-
                     refreshRememberedAccounts()
 
                     session.completeAuthentication(

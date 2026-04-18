@@ -129,6 +129,9 @@ struct ChatScreen: View {
             }
             #endif
         }
+        .task {
+            viewModel.refreshInbox()
+        }
     }
 
     private func messageComposer(
@@ -184,40 +187,3 @@ struct ChatScreen: View {
     }
 }
 
-#Preview("Populated Chat") {
-    NavigationStack {
-        ChatScreen(
-            viewModel: ChatViewModel(
-                conversation: Conversation(
-                    id: UUID(),
-                    title: "Alice Johnson",
-                    lastMessagePreview: "I reviewed the latest security notes.",
-                    lastActivity: Date(),
-                    unreadCount: 2,
-                    trustState: .verified,
-                    disappearingEnabled: true
-                ),
-                provider: PopulatedMessageProvider()
-            )
-        )
-    }
-}
-
-#Preview("Empty Chat") {
-    NavigationStack {
-        ChatScreen(
-            viewModel: ChatViewModel(
-                conversation: Conversation(
-                    id: UUID(),
-                    title: "Bob Smith",
-                    lastMessagePreview: "",
-                    lastActivity: Date(),
-                    unreadCount: 0,
-                    trustState: .unverified,
-                    disappearingEnabled: false
-                ),
-                provider: EmptyMessageProvider()
-            )
-        )
-    }
-}

@@ -16,9 +16,10 @@ final class ConversationListViewModel {
     var isLoading = false
     private(set) var conversations: [Conversation] = []
 
+    let currentUserID: String
+
     private let contactService: ContactService
     private let conversationDirectoryService: ConversationDirectoryService
-    private let currentUserID: String
 
     init(
         contactService: ContactService,

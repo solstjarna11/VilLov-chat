@@ -5,14 +5,6 @@
 //  Created by Lovísa Sól on 17.4.2026.
 //
 
-
-//
-//  CreateAccountViewModel.swift
-//  VilLov Chat
-//
-//  Created by Lovísa Sól on 17.4.2026.
-//
-
 import Foundation
 import Observation
 

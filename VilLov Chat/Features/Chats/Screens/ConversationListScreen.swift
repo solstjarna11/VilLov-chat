@@ -36,6 +36,7 @@ struct ConversationListScreen: View {
                     ChatScreen(
                         viewModel: ChatViewModel(
                             conversation: conversation,
+                            currentUserID: viewModel.currentUserID,
                             provider: messageProvider,
                             conversationService: conversationService
                         )
@@ -55,6 +56,7 @@ struct ConversationListScreen: View {
                                 contactService: contactService,
                                 conversationService: conversationService
                             ),
+                            currentUserID: viewModel.currentUserID,
                             messageProvider: messageProvider,
                             conversationService: conversationService
                         )

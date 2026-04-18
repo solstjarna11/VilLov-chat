@@ -23,7 +23,12 @@ final class AppContainer {
     let conversationService: ConversationService
 
     init() {
-        let providers = AppProviders.mock
+        let providers = AppProviders(
+            conversations: EmptyConversationProvider(),
+            contacts: EmptyContactProvider(),
+            devices: EmptyDeviceProvider(),
+            messages: EmptyMessageProvider()
+        )
 
         let tokenStore = AuthTokenStore()
         let apiClient = APIClient(
