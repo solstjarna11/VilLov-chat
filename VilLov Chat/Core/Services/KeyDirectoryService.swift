@@ -10,9 +10,14 @@ import Foundation
 
 final class KeyDirectoryService {
     private let apiClient: APIClient
+    private let localKeyStore: LocalKeyStore
 
-    init(apiClient: APIClient) {
+    init(
+        apiClient: APIClient,
+        localKeyStore: LocalKeyStore
+    ) {
         self.apiClient = apiClient
+        self.localKeyStore = localKeyStore
     }
 
     func fetchRecipientKeyBundle(for userID: String) async throws -> RecipientKeyBundle {
@@ -24,14 +29,7 @@ final class KeyDirectoryService {
     }
 
     func uploadDevelopmentKeyBundleIfNeeded(for userID: String) async throws {
-        let request = UploadKeyBundleRequest(
-            userID: userID,
-            identityKey: "dev-identity-key-\(userID)",
-            signedPrekey: "dev-signed-prekey-\(userID)",
-            signedPrekeySignature: "dev-signed-prekey-signature-\(userID)",
-            oneTimePrekey: "dev-onetime-prekey-\(userID)"
-        )
-
+        let request = try localKeyStore.uploadBundleRequest(for: userID)
         try await uploadOwnKeyBundle(request)
     }
 }

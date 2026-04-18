@@ -31,23 +31,18 @@ final class ConversationService: ConversationServicing {
         to recipientUserID: String,
         conversationID: UUID
     ) async throws {
-        print("ConversationService.sendMessage started for recipient:", recipientUserID)
-
         let keyBundle = try await keyDirectoryService.fetchRecipientKeyBundle(for: recipientUserID)
-        print("Fetched key bundle for:", keyBundle.userID)
 
         try await e2eeEngine.ensureSession(
             with: recipientUserID,
             bundle: keyBundle
         )
-        print("Ensured session for recipient:", recipientUserID)
 
         let encrypted = try await e2eeEngine.encrypt(
             plaintext: plaintext,
-            recipientUserID: recipientUserID,
+            recipientBundle: keyBundle,
             conversationID: conversationID
         )
-        print("Encrypted message for conversation:", conversationID.uuidString)
 
         let request = SendCiphertextRequest(
             recipientUserID: recipientUserID,
@@ -59,9 +54,8 @@ final class ConversationService: ConversationServicing {
         )
 
         try await relayService.send(request)
-        print("Sent ciphertext envelope to backend for recipient:", recipientUserID)
     }
-
+    
     func fetchInbox() async throws -> [DecryptedEnvelopeMessage] {
         print("ConversationService.fetchInbox started")
 

@@ -36,6 +36,8 @@ final class AppContainer {
             tokenStore: tokenStore
         )
 
+        let session = AppSession(tokenStore: tokenStore)
+
         let authenticator = DevelopmentPasskeyAuthenticator(
             credentialStore: DevPasskeyCredentialStore()
         )
@@ -46,18 +48,29 @@ final class AppContainer {
             authenticator: authenticator
         )
 
+        let localKeyStore = LocalKeyStore()
+
         let contactService = ContactService(apiClient: apiClient)
         let conversationDirectoryService = ConversationDirectoryService(apiClient: apiClient)
-        let keyDirectoryService = KeyDirectoryService(apiClient: apiClient)
+
+        let keyDirectoryService = KeyDirectoryService(
+            apiClient: apiClient,
+            localKeyStore: localKeyStore
+        )
+
         let relayService = RelayService(apiClient: apiClient)
+
+        let e2eeEngine = DefaultE2EEEngine(
+            localKeyStore: localKeyStore,
+            session: session
+        )
+
         let conversationService = ConversationService(
             apiClient: apiClient,
             keyDirectoryService: keyDirectoryService,
             relayService: relayService,
-            e2eeEngine: StubE2EEEngine()
+            e2eeEngine: e2eeEngine
         )
-
-        let session = AppSession(tokenStore: tokenStore)
 
         self.tokenStore = tokenStore
         self.apiClient = apiClient

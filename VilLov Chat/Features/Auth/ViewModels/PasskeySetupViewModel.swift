@@ -34,8 +34,7 @@ final class PasskeySetupViewModel {
         userHandle: String? = nil,
         rememberedAccountName: String? = nil,
         rememberedAccountsStore: RememberedAccountsStore? = nil,
-        keyDirectoryService: KeyDirectoryService,
-
+        keyDirectoryService: KeyDirectoryService
     ) {
         self.mode = mode
         self.authService = authService
@@ -82,9 +81,7 @@ final class PasskeySetupViewModel {
                     userHandle: finalUserHandle,
                     displayName: finalDisplayName
                 )
-            }
-            
-            if let finalUserHandle {
+
                 try await keyDirectoryService.uploadDevelopmentKeyBundleIfNeeded(for: finalUserHandle)
             }
 
