@@ -68,38 +68,3 @@ struct ConversationSecurityScreen: View {
     }
 }
 
-#Preview("Verified Security Settings") {
-    NavigationStack {
-        ConversationSecurityScreen(
-            viewModel: ConversationSecurityViewModel(
-                conversation: Conversation(
-                    id: UUID(),
-                    title: "Alice Johnson",
-                    lastMessagePreview: "",
-                    lastActivity: Date(),
-                    unreadCount: 0,
-                    trustState: .verified,
-                    disappearingEnabled: true
-                )
-            )
-        )
-    }
-}
-
-#Preview("Unverified Security Settings") {
-    NavigationStack {
-        ConversationSecurityScreen(
-            viewModel: ConversationSecurityViewModel(
-                conversation: Conversation(
-                    id: UUID(),
-                    title: "Bob Smith",
-                    lastMessagePreview: "",
-                    lastActivity: Date(),
-                    unreadCount: 0,
-                    trustState: .unverified,
-                    disappearingEnabled: false
-                )
-            )
-        )
-    }
-}

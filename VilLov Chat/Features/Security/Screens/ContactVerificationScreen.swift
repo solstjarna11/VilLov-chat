@@ -109,40 +109,4 @@ struct ContactVerificationScreen: View {
     }
 }
 
-#Preview("Verified Contact") {
-    NavigationStack {
-        ContactVerificationScreen(
-            viewModel: ContactVerificationViewModel(
-                conversation: Conversation(
-                    id: UUID(),
-                    title: "Alice Johnson",
-                    lastMessagePreview: "",
-                    lastActivity: Date(),
-                    unreadCount: 0,
-                    trustState: .verified,
-                    disappearingEnabled: false
-                ),
-                verificationData: MockContactVerificationData.verified
-            )
-        )
-    }
-}
 
-#Preview("Unverified Contact") {
-    NavigationStack {
-        ContactVerificationScreen(
-            viewModel: ContactVerificationViewModel(
-                conversation: Conversation(
-                    id: UUID(),
-                    title: "Bob Smith",
-                    lastMessagePreview: "",
-                    lastActivity: Date(),
-                    unreadCount: 0,
-                    trustState: .unverified,
-                    disappearingEnabled: false
-                ),
-                verificationData: MockContactVerificationData.unverified
-            )
-        )
-    }
-}
