@@ -15,7 +15,7 @@ struct Message: Identifiable, Hashable {
     let status: MessageStatus
 }
 
-enum MessageStatus {
+enum MessageStatus: String, Codable{
     case sending
     case sent
     case delivered

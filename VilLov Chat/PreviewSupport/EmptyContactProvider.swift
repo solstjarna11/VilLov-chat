@@ -14,24 +14,3 @@ struct EmptyContactProvider: ContactProviding {
     }
 }
 
-struct PopulatedContactProvider: ContactProviding {
-    func loadContacts(for currentUserID: String?) -> [Contact] {
-        switch currentUserID {
-        case "user_alice":
-            return [
-                .mockBob,
-                .mockCharlie
-            ]
-        case "user_bob":
-            return [
-                .mockAlice
-            ]
-        case "user_charlie":
-            return [
-                .mockAlice
-            ]
-        default:
-            return Contact.mockData
-        }
-    }
-}

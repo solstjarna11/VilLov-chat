@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MainTabView: View {
     let environment: AppEnvironment
+    let currentUserID: String
 
     var body: some View {
         TabView {
@@ -16,7 +17,7 @@ struct MainTabView: View {
                 viewModel: ConversationListViewModel(
                     contactService: environment.contactService,
                     conversationDirectoryService: environment.conversationDirectoryService,
-                    currentUserID: environment.session.currentUserID ?? "user_alice"
+                    currentUserID: currentUserID
                 ),
                 messageProvider: environment.providers.messages,
                 contactService: environment.contactService,
@@ -36,8 +37,15 @@ struct MainTabView: View {
             }
 
             SettingsScreen(
-                viewModel: SettingsViewModel(),
-                deviceProvider: environment.providers.devices
+                viewModel: SettingsViewModel(
+                    currentUserID: currentUserID,
+                    rememberedAccountName: environment.session.rememberedAccountName
+                ),
+                deviceProvider: environment.providers.devices,
+                onSignOut: {
+                    environment.authService.signOut()
+                    environment.session.signOut()
+                }
             )
             .tabItem {
                 Label("Settings", systemImage: "gearshape")

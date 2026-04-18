@@ -12,15 +12,18 @@ struct NewConversationScreen: View {
     @State private var viewModel: NewConversationViewModel
     @State private var createdConversation: Conversation?
 
+    private let currentUserID: String
     private let messageProvider: MessageProviding
     private let conversationService: ConversationServicing
 
     init(
         viewModel: NewConversationViewModel,
+        currentUserID: String,
         messageProvider: MessageProviding,
         conversationService: ConversationServicing
     ) {
         _viewModel = State(initialValue: viewModel)
+        self.currentUserID = currentUserID
         self.messageProvider = messageProvider
         self.conversationService = conversationService
     }
@@ -64,6 +67,7 @@ struct NewConversationScreen: View {
             ChatScreen(
                 viewModel: ChatViewModel(
                     conversation: conversation,
+                    currentUserID: currentUserID,
                     provider: messageProvider,
                     conversationService: conversationService
                 )

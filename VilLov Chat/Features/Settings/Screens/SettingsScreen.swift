@@ -1,5 +1,5 @@
 //
-//  SecurityScreen.swift
+//  SettingsScreen.swift
 //  VilLov Chat
 //
 //  Created by Lovísa Sól on 25.3.2026.
@@ -12,13 +12,16 @@ struct SettingsScreen: View {
     @State private var viewModel: SettingsViewModel
 
     private let deviceProvider: DeviceProviding
+    private let onSignOut: () -> Void
 
     init(
         viewModel: SettingsViewModel,
-        deviceProvider: DeviceProviding
+        deviceProvider: DeviceProviding,
+        onSignOut: @escaping () -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
         self.deviceProvider = deviceProvider
+        self.onSignOut = onSignOut
     }
 
     var body: some View {
@@ -32,6 +35,7 @@ struct SettingsScreen: View {
                 notificationsSection(viewModel: $bindableViewModel)
                 storageSection
                 aboutSection
+                signOutSection
             }
             .navigationTitle("Settings")
         }
@@ -39,8 +43,17 @@ struct SettingsScreen: View {
 
     private var accountSection: some View {
         Section("Account") {
-            SettingsRow(title: "Profile", systemImage: "person.circle", detail: "Lovisa")
-            SettingsRow(title: "Username", systemImage: "at", detail: "@lovisa")
+            SettingsRow(
+                title: "Profile",
+                systemImage: "person.circle",
+                detail: viewModel.profileDisplayName
+            )
+
+            SettingsRow(
+                title: "Username",
+                systemImage: "at",
+                detail: viewModel.usernameDisplay
+            )
         }
     }
 
@@ -97,11 +110,19 @@ struct SettingsScreen: View {
             SettingsRow(title: "Version", systemImage: "info.circle", detail: "0.1")
         }
     }
+
+    private var signOutSection: some View {
+        Section {
+            Button(role: .destructive) {
+                onSignOut()
+            } label: {
+                HStack {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                    Text("Log Out")
+                }
+            }
+        }
+    }
 }
 
-#Preview {
-    SettingsScreen(
-        viewModel: SettingsViewModel(),
-        deviceProvider: EmptyDeviceProvider()
-    )
-}
+

@@ -26,16 +26,3 @@ struct AppProviders {
         self.messages = messages
     }
 }
-
-extension AppProviders {
-    static let mock: AppProviders = {
-        let mock = MockDataProvider()
-
-        return AppProviders(
-            conversations: mock,
-            contacts: mock,
-            devices: mock,
-            messages: mock
-        )
-    }()
-}

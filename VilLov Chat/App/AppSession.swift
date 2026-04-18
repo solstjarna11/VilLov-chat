@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 26.3.2026.
 //
 
-
 import Foundation
 import Observation
 
@@ -16,6 +15,7 @@ final class AppSession {
     var currentUserID: String?
     var isPasskeyConfigured: Bool = false
     var rememberedAccountName: String?
+    var rememberedUserHandle: String?
 
     private let tokenStore: AuthTokenStore
 
@@ -33,6 +33,7 @@ final class AppSession {
         isPasskeyConfigured: Bool = true
     ) {
         self.currentUserID = userID
+        self.rememberedUserHandle = userID
         self.rememberedAccountName = rememberedAccountName
         self.isPasskeyConfigured = isPasskeyConfigured
         self.state = .authenticated

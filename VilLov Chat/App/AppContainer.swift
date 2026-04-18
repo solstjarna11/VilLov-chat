@@ -4,8 +4,6 @@
 //
 //  Created by Lovísa Sól on 26.3.2026.
 //
-// This is the composition root. Right now it only owns app-wide objects. Later it will own services, network, crypto, and live repositories.
-//
 
 import Foundation
 
@@ -25,15 +23,22 @@ final class AppContainer {
     let conversationService: ConversationService
 
     init() {
-        let providers = AppProviders.mock
+        let providers = AppProviders(
+            conversations: EmptyConversationProvider(),
+            contacts: EmptyContactProvider(),
+            devices: EmptyDeviceProvider(),
+            messages: EmptyMessageProvider()
+        )
 
         let tokenStore = AuthTokenStore()
         let apiClient = APIClient(
-            baseURL: URL(string: "http://127.0.0.1:8000")!,
+            baseURL: URL(string: "https://auth.villovchat.com")!,
             tokenStore: tokenStore
         )
 
-        let authenticator = StubPasskeyAuthenticator()
+        let authenticator = DevelopmentPasskeyAuthenticator(
+            credentialStore: DevPasskeyCredentialStore()
+        )
 
         let authService = AuthService(
             apiClient: apiClient,

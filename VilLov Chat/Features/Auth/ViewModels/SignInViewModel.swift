@@ -2,7 +2,7 @@
 //  SignInViewModel.swift
 //  VilLov Chat
 //
-//  Created by Lovísa Sól on 26.3.2026.
+//  Created by Lovísa Sól on 17.4.2026.
 //
 
 
@@ -14,36 +14,63 @@ import Observation
 final class SignInViewModel {
     var isLoading = false
     var errorMessage: String?
-    var selectedDevAccount: DevAuthAccount = .alice
     var showsAccountPicker = false
+    var rememberedAccounts: [RememberedAccount] = []
+    var selectedAccount: RememberedAccount?
 
     private let authService: AuthService
     private let session: AppSession
+    private let rememberedAccountsStore: RememberedAccountsStore
+    private let keyDirectoryService: KeyDirectoryService
 
     init(
         authService: AuthService,
-        session: AppSession
+        session: AppSession,
+        rememberedAccountsStore: RememberedAccountsStore? = nil,
+        keyDirectoryService: KeyDirectoryService
     ) {
         self.authService = authService
         self.session = session
+        self.rememberedAccountsStore = rememberedAccountsStore ?? RememberedAccountsStore()
+        self.keyDirectoryService = keyDirectoryService
+
+        self.rememberedAccounts = self.rememberedAccountsStore.loadAccounts()
+        self.selectedAccount = self.rememberedAccounts.first
     }
 
     var rememberedAccountName: String? {
-        session.rememberedAccountName
+        rememberedAccounts.first?.displayName
+    }
+
+    var hasRememberedAccounts: Bool {
+        !rememberedAccounts.isEmpty
+    }
+
+    func refreshRememberedAccounts() {
+        rememberedAccounts = rememberedAccountsStore.loadAccounts()
+        if selectedAccount == nil || !rememberedAccounts.contains(where: { $0.id == selectedAccount?.id }) {
+            selectedAccount = rememberedAccounts.first
+        }
     }
 
     func signInWithDefaultPasskey() {
-        signIn(using: nil, rememberedName: session.rememberedAccountName)
+        signIn(
+            using: rememberedAccounts.first?.userHandle,
+            rememberedName: rememberedAccounts.first?.displayName
+        )
     }
 
     func signInWithRememberedAccount() {
-        signIn(using: session.currentUserID, rememberedName: session.rememberedAccountName)
+        signIn(
+            using: rememberedAccounts.first?.userHandle,
+            rememberedName: rememberedAccounts.first?.displayName
+        )
     }
 
-    func signInWithSelectedDevAccount() {
+    func signInWithSelectedAccount() {
         signIn(
-            using: selectedDevAccount.userHandle,
-            rememberedName: selectedDevAccount.displayName
+            using: selectedAccount?.userHandle,
+            rememberedName: selectedAccount?.displayName
         )
     }
 
@@ -55,13 +82,24 @@ final class SignInViewModel {
             do {
                 let resolvedUserHandle = try await authService.signInWithPasskey(userHandle: userHandle)
 
+                let finalUserID = resolvedUserHandle ?? userHandle
+                let finalDisplayName = rememberedName ?? finalUserID ?? "Unknown"
+
+                if let finalUserID {
+                    rememberedAccountsStore.upsertAccount(
+                        userHandle: finalUserID,
+                        displayName: finalDisplayName
+                    )
+
+                    try await keyDirectoryService.uploadDevelopmentKeyBundleIfNeeded(for: finalUserID)
+                }
+
                 await MainActor.run {
-                    let finalUserID = resolvedUserHandle ?? userHandle
-                    let displayName = rememberedName ?? Self.displayName(for: finalUserID)
+                    refreshRememberedAccounts()
 
                     session.completeAuthentication(
                         userID: finalUserID,
-                        rememberedAccountName: displayName
+                        rememberedAccountName: finalDisplayName
                     )
 
                     isLoading = false
@@ -72,19 +110,6 @@ final class SignInViewModel {
                     isLoading = false
                 }
             }
-        }
-    }
-
-    private static func displayName(for userID: String?) -> String? {
-        switch userID {
-        case "user_alice":
-            return "Alice"
-        case "user_bob":
-            return "Bob"
-        case "user_charlie":
-            return "Charlie"
-        default:
-            return nil
         }
     }
 }

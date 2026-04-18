@@ -25,7 +25,17 @@ struct RootView: View {
                 WelcomeScreen(environment: environment)
 
             case .authenticated:
-                MainTabView(environment: environment)
+                if let currentUserID = session.currentUserID {
+                    MainTabView(
+                        environment: environment,
+                        currentUserID: currentUserID
+                    )
+                } else {
+                    WelcomeScreen(environment: environment)
+                        .task {
+                            session.signOut()
+                        }
+                }
             }
         }
     }

@@ -6,17 +6,17 @@
 //
 
 import SwiftUI
+import Observation
 
 struct PasskeySetupScreen: View {
-    enum Mode {
-        case registration
-        case authentication
+    @State private var viewModel: PasskeySetupViewModel
+
+    init(viewModel: PasskeySetupViewModel) {
+        _viewModel = State(initialValue: viewModel)
     }
 
-    let mode: Mode
-
-    var titleText: String {
-        switch mode {
+    private var titleText: String {
+        switch viewModel.mode {
         case .registration:
             return "Set Up Passkey"
         case .authentication:
@@ -24,17 +24,21 @@ struct PasskeySetupScreen: View {
         }
     }
 
-    var descriptionText: String {
-        switch mode {
+    private var descriptionText: String {
+        switch viewModel.mode {
         case .registration:
-            return "You will create a passkey for this device to securely access your VilLov Chat account."
+            return "Create a passkey-style credential for this device to securely access your VilLov Chat account."
         case .authentication:
-            return "Authenticate with your existing passkey to access your VilLov Chat account."
+            return "Authenticate with your passkey-style credential to access your VilLov Chat account."
         }
     }
 
-    var actionText: String {
-        switch mode {
+    private var actionText: String {
+        if viewModel.isWorking {
+            return "Please Wait..."
+        }
+
+        switch viewModel.mode {
         case .registration:
             return "Set Up Passkey"
         case .authentication:
@@ -53,20 +57,37 @@ struct PasskeySetupScreen: View {
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 16) {
-                Text("This screen will later connect to the real authentication service and platform passkey APIs.")
+                Text("This flow is connected to the authentication service.")
                     .font(.body)
 
-                Text("The UI and flow are being implemented now with the final structure in place.")
+                Text("During development it uses the development passkey authenticator while preserving the same registration and sign-in structure.")
                     .font(.body)
                     .foregroundStyle(.secondary)
             }
 
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+            }
+
             Spacer()
 
-            Button(actionText) {
-                // later: connect to real passkey registration/authentication flow
+            Button {
+                Task {
+                    await viewModel.performPasskeyFlow()
+                }
+            } label: {
+                if viewModel.isWorking {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                } else {
+                    Text(actionText)
+                        .frame(maxWidth: .infinity)
+                }
             }
             .buttonStyle(.borderedProminent)
+            .disabled(viewModel.isWorking)
         }
         .padding(32)
         .navigationTitle(titleText)
