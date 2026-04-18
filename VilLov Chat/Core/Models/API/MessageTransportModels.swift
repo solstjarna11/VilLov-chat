@@ -1,5 +1,5 @@
 //
-//  SendCiphertextRequest.swift
+//  MessageTransportModels.swift
 //  VilLov Chat
 //
 //  Created by Lovísa Sól on 26.3.2026.
