@@ -98,8 +98,7 @@ struct CreateAccountScreen: View {
                     authService: environment.authService,
                     session: environment.session,
                     userHandle: viewModel.normalizedUserHandle,
-                    rememberedAccountName: viewModel.trimmedDisplayName,
-                    keyDirectoryService: environment.keyDirectoryService
+                    rememberedAccountName: viewModel.trimmedDisplayName
                 )
             )
         }

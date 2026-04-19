@@ -178,6 +178,10 @@ final class ConversationService: ConversationServicing {
                  .invalidRecipientSignedPrekeySignature,
                  .invalidRecipientOneTimePrekey:
                 return "Recipient-side key material is invalid for this message flow."
+            case .invalidRatchetPublicKey:
+                return "Ratchet public key is invalid."
+            case .missingLocalRatchetKey:
+                return "Local ratchet key is missing."
             }
         }
 

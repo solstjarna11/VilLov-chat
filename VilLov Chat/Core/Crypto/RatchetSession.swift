@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 19.4.2026.
 //
 
-
 import Foundation
 
 struct RatchetSession: Codable, Equatable, Identifiable {
@@ -30,4 +29,8 @@ struct RatchetSession: Codable, Equatable, Identifiable {
 
     let createdAt: Date
     let updatedAt: Date
+
+    /// True when the next outbound message must first derive a new sending chain
+    /// from DH(localRatchetPrivateKey, remoteRatchetPublicKey).
+    let needsSendRatchet: Bool
 }

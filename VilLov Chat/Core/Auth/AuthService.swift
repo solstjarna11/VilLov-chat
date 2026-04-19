@@ -78,6 +78,14 @@ final class AuthService {
         )
 
         tokenStore.setSessionToken(token)
+
+        do {
+            try await keyDirectoryService.ensureInitialKeyBundle(for: userHandle)
+        } catch {
+            tokenStore.clear()
+            throw error
+        }
+
         return userHandle
     }
 
@@ -114,7 +122,19 @@ final class AuthService {
         )
 
         tokenStore.setSessionToken(token)
-        return finish.userHandle
+
+        let resolvedUserHandle = finish.userHandle ?? userHandle
+
+        if let resolvedUserHandle {
+            do {
+                try await keyDirectoryService.ensureInitialKeyBundle(for: resolvedUserHandle)
+            } catch {
+                tokenStore.clear()
+                throw error
+            }
+        }
+
+        return resolvedUserHandle
     }
 
     func signOut() {

@@ -1,5 +1,5 @@
 //
-//  LocalSessionStoring.swift
+//  LocalSessionStore.swift
 //  VilLov Chat
 //
 //  Created by Lovísa Sól on 19.4.2026.
@@ -81,5 +81,21 @@ final class LocalSessionStore: LocalSessionStoring {
         remoteUserID: String
     ) -> String {
         "sessions/\(localUserID)_\(remoteUserID)_\(conversationID.uuidString).json.enc"
+    }
+    
+    func overwriteRawSessionDataForTesting(
+        _ data: Data,
+        conversationID: UUID,
+        localUserID: String,
+        remoteUserID: String
+    ) throws {
+        try encryptedStore.saveRawData(
+            data,
+            to: storagePath(
+                conversationID: conversationID,
+                localUserID: localUserID,
+                remoteUserID: remoteUserID
+            )
+        )
     }
 }

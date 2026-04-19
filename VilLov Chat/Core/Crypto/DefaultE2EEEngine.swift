@@ -311,7 +311,8 @@ final class DefaultE2EEEngine: E2EEEngine {
             receiveMessageNumber: 0,
             previousSendingChainLength: 0,
             createdAt: Date(),
-            updatedAt: Date()
+            updatedAt: Date(),
+            needsSendRatchet: false
         )
 
         let result = try encryptAndAdvanceSession(
@@ -340,6 +341,8 @@ final class DefaultE2EEEngine: E2EEEngine {
         sessionState: RatchetSession
     ) throws -> (ciphertext: String, header: String) {
         var mutableSession = sessionState
+
+        try performPendingSendRatchetIfNeeded(sessionState: &mutableSession)
 
         let localRatchetPrivateKeyData = mutableSession.localRatchetPrivateKey
         let localRatchetPrivateKey = try localRatchetPrivateKeyData.map {
@@ -439,7 +442,8 @@ final class DefaultE2EEEngine: E2EEEngine {
             receiveMessageNumber: sessionState.receiveMessageNumber,
             previousSendingChainLength: sessionState.previousSendingChainLength,
             createdAt: sessionState.createdAt,
-            updatedAt: Date()
+            updatedAt: Date(),
+            needsSendRatchet: false
         )
 
         let headerData = try JSONEncoder().encode(header)
@@ -582,7 +586,7 @@ final class DefaultE2EEEngine: E2EEEngine {
                 remoteSigningIdentityKey: header.senderIdentityKey,
                 remoteAgreementIdentityKey: header.senderIdentityAgreementKey,
                 rootKey: initialRootKey,
-                sendingChainKey: initialReceivingChain,
+                sendingChainKey: nil,
                 receivingChainKey: receiveStep.nextChainKey,
                 localRatchetPrivateKey: localRatchetPrivateKey.rawRepresentation,
                 remoteRatchetPublicKey: initialRemoteRatchetPublicKey?.rawRepresentation,
@@ -590,7 +594,8 @@ final class DefaultE2EEEngine: E2EEEngine {
                 receiveMessageNumber: 1,
                 previousSendingChainLength: 0,
                 createdAt: Date(),
-                updatedAt: Date()
+                updatedAt: Date(),
+                needsSendRatchet: true
             )
 
             try localSessionStore.saveSession(sessionState)
@@ -625,7 +630,7 @@ final class DefaultE2EEEngine: E2EEEngine {
 
         var mutableSession = sessionState
 
-        var ephemeralData = Data()
+        let ephemeralData = Data()
         var ratchetData = Data()
 
         let incomingRatchetPublicKey: Curve25519.KeyAgreement.PublicKey?
@@ -659,14 +664,6 @@ final class DefaultE2EEEngine: E2EEEngine {
                 )
 
                 let newLocalRatchetPrivate = Curve25519.KeyAgreement.PrivateKey()
-                let senderDH = try newLocalRatchetPrivate.sharedSecretFromKeyAgreement(with: incomingRatchetPublicKey)
-
-                let sendStepRoot = DoubleRatchet.deriveRootStep(
-                    rootKey: receiveStepRoot.nextRootKey,
-                    dhOutput: senderDH,
-                    senderLabel: "sender",
-                    receiverLabel: "receiver"
-                )
 
                 mutableSession = RatchetSession(
                     id: mutableSession.id,
@@ -675,16 +672,17 @@ final class DefaultE2EEEngine: E2EEEngine {
                     remoteUserID: mutableSession.remoteUserID,
                     remoteSigningIdentityKey: mutableSession.remoteSigningIdentityKey,
                     remoteAgreementIdentityKey: mutableSession.remoteAgreementIdentityKey,
-                    rootKey: sendStepRoot.nextRootKey,
-                    sendingChainKey: sendStepRoot.sendingChainKey,
-                    receivingChainKey: receiveStepRoot.receivingChainKey,
+                    rootKey: receiveStepRoot.nextRootKey,
+                    sendingChainKey: nil,
+                    receivingChainKey: receiveStepRoot.senderChainKey,
                     localRatchetPrivateKey: newLocalRatchetPrivate.rawRepresentation,
                     remoteRatchetPublicKey: incomingRaw,
                     sendMessageNumber: 0,
                     receiveMessageNumber: 0,
                     previousSendingChainLength: mutableSession.sendMessageNumber,
                     createdAt: mutableSession.createdAt,
-                    updatedAt: Date()
+                    updatedAt: Date(),
+                    needsSendRatchet: true
                 )
             }
         }
@@ -756,7 +754,8 @@ final class DefaultE2EEEngine: E2EEEngine {
                 receiveMessageNumber: header.messageNumber + 1,
                 previousSendingChainLength: mutableSession.previousSendingChainLength,
                 createdAt: mutableSession.createdAt,
-                updatedAt: Date()
+                updatedAt: Date(),
+                needsSendRatchet: mutableSession.needsSendRatchet
             )
 
             try localSessionStore.saveSession(updatedSession)
@@ -892,6 +891,57 @@ final class DefaultE2EEEngine: E2EEEngine {
         return data
     }
     
+    private func performPendingSendRatchetIfNeeded(
+        sessionState: inout RatchetSession
+    ) throws {
+        guard sessionState.needsSendRatchet else { return }
+
+        guard let localRatchetPrivateRaw = sessionState.localRatchetPrivateKey else {
+            throw E2EEError.missingLocalRatchetKey
+        }
+
+        guard let remoteRatchetPublicRaw = sessionState.remoteRatchetPublicKey else {
+            throw E2EEError.invalidRatchetPublicKey
+        }
+
+        let localRatchetPrivate = try Curve25519.KeyAgreement.PrivateKey(
+            rawRepresentation: localRatchetPrivateRaw
+        )
+
+        let remoteRatchetPublic = try Curve25519.KeyAgreement.PublicKey(
+            rawRepresentation: remoteRatchetPublicRaw
+        )
+
+        let dh = try localRatchetPrivate.sharedSecretFromKeyAgreement(with: remoteRatchetPublic)
+
+        let sendStepRoot = DoubleRatchet.deriveRootStep(
+            rootKey: sessionState.rootKey,
+            dhOutput: dh,
+            senderLabel: "sender",
+            receiverLabel: "receiver"
+        )
+
+        sessionState = RatchetSession(
+            id: sessionState.id,
+            conversationID: sessionState.conversationID,
+            localUserID: sessionState.localUserID,
+            remoteUserID: sessionState.remoteUserID,
+            remoteSigningIdentityKey: sessionState.remoteSigningIdentityKey,
+            remoteAgreementIdentityKey: sessionState.remoteAgreementIdentityKey,
+            rootKey: sendStepRoot.nextRootKey,
+            sendingChainKey: sendStepRoot.senderChainKey,
+            receivingChainKey: sessionState.receivingChainKey,
+            localRatchetPrivateKey: sessionState.localRatchetPrivateKey,
+            remoteRatchetPublicKey: sessionState.remoteRatchetPublicKey,
+            sendMessageNumber: 0,
+            receiveMessageNumber: sessionState.receiveMessageNumber,
+            previousSendingChainLength: sessionState.previousSendingChainLength,
+            createdAt: sessionState.createdAt,
+            updatedAt: Date(),
+            needsSendRatchet: false
+        )
+    }
+    
     private func symmetricKeyData(_ key: SymmetricKey) -> Data {
         key.withUnsafeBytes { Data($0) }
     }
@@ -967,10 +1017,11 @@ final class DefaultE2EEEngine: E2EEEngine {
             receiveMessageNumber: incomingMessageNumber,
             previousSendingChainLength: sessionState.previousSendingChainLength,
             createdAt: sessionState.createdAt,
-            updatedAt: Date()
+            updatedAt: Date(),
+            needsSendRatchet: sessionState.needsSendRatchet
         )
     }
-
+    
     private func deterministicConversationID(localUserID: String, remoteUserID: String) -> UUID {
         let sorted = [localUserID, remoteUserID].sorted().joined(separator: ":")
         let digest = SHA256.hash(data: Data(sorted.utf8))

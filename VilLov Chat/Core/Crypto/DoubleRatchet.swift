@@ -53,7 +53,7 @@ enum DoubleRatchet {
         dhOutput: SharedSecret,
         senderLabel: String,
         receiverLabel: String
-    ) -> (nextRootKey: Data, sendingChainKey: Data, receivingChainKey: Data) {
+    ) -> (nextRootKey: Data, senderChainKey: Data, receiverChainKey: Data) {
         let dhData = dhOutput.withUnsafeBytes { Data($0) }
         let inputKey = SymmetricKey(data: dhData)
 
@@ -74,8 +74,8 @@ enum DoubleRatchet {
 
         return (
             nextRootKey: nextRootKey,
-            sendingChainKey: sendingChainKey,
-            receivingChainKey: receivingChainKey
+            senderChainKey: sendingChainKey,
+            receiverChainKey: receivingChainKey
         )
     }
 }

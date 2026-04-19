@@ -24,8 +24,7 @@ final class SignInViewModel {
     init(
         authService: AuthService,
         session: AppSession,
-        rememberedAccountsStore: RememberedAccountsStore? = nil,
-        keyDirectoryService: KeyDirectoryService
+        rememberedAccountsStore: RememberedAccountsStore? = nil
     ) {
         self.authService = authService
         self.session = session

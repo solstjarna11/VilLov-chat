@@ -39,7 +39,7 @@ struct WelcomeScreen: View {
                         SignInScreen(
                             viewModel: SignInViewModel(
                                 authService: environment.authService,
-                                session: environment.session, keyDirectoryService: environment.keyDirectoryService
+                                session: environment.session
                             )
                         )
                     } label: {

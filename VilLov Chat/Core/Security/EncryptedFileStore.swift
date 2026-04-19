@@ -96,4 +96,15 @@ final class EncryptedFileStore {
             withIntermediateDirectories: true
         )
     }
+    
+    func saveRawData(_ data: Data, to relativePath: String) throws {
+        let fileURL = try url(for: relativePath)
+        try ensureDirectoryExists(for: fileURL)
+        try data.write(to: fileURL, options: .atomic)
+    }
+
+    func fileExists(at relativePath: String) throws -> Bool {
+        let fileURL = try url(for: relativePath)
+        return FileManager.default.fileExists(atPath: fileURL.path)
+    }
 }

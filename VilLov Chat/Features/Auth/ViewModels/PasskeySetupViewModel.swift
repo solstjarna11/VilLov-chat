@@ -32,8 +32,7 @@ final class PasskeySetupViewModel {
         session: AppSession,
         userHandle: String? = nil,
         rememberedAccountName: String? = nil,
-        rememberedAccountsStore: RememberedAccountsStore? = nil,
-        keyDirectoryService: KeyDirectoryService
+        rememberedAccountsStore: RememberedAccountsStore? = nil
     ) {
         self.mode = mode
         self.authService = authService

@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 26.3.2026.
 //
 
-
 import Foundation
 
 struct OneTimePreKeyCountResponse: Codable, Equatable {
@@ -75,6 +74,32 @@ final class KeyDirectoryService {
         let request = try localKeyStore.uploadBundleRequest(
             for: userID,
             oneTimePrekeyCount: batchSize
+        )
+        try await uploadOwnKeyBundle(request)
+    }
+
+    /// Ensure the authenticated user is messaging-ready before entering the app.
+    /// If the backend has no OPKs yet, upload a full initial bundle.
+    func ensureInitialKeyBundle(for userID: String) async throws {
+        do {
+            let remaining = try await fetchOwnRemainingOPKCount()
+            if remaining > 0 {
+                return
+            }
+        } catch let error as APIError {
+            switch error {
+            case .notFound:
+                break
+            default:
+                throw error
+            }
+        } catch {
+            throw error
+        }
+
+        let request = try localKeyStore.uploadBundleRequest(
+            for: userID,
+            oneTimePrekeyCount: defaultUploadBatchSize
         )
         try await uploadOwnKeyBundle(request)
     }
