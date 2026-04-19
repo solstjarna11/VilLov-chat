@@ -16,10 +16,14 @@ enum EncryptedFileStoreError: Error {
 
 final class EncryptedFileStore {
     private let keyManager: LocalStorageKeyManager
-    private let directoryName = "EncryptedLocalStore"
+    private let directoryName: String
 
-    init(keyManager: LocalStorageKeyManager = LocalStorageKeyManager()) {
+    init(
+        keyManager: LocalStorageKeyManager = LocalStorageKeyManager(),
+        directoryName: String = "EncryptedLocalStore"
+    ) {
         self.keyManager = keyManager
+        self.directoryName = directoryName
     }
 
     func save<T: Encodable>(_ value: T, to relativePath: String) throws {
@@ -58,6 +62,24 @@ final class EncryptedFileStore {
         let fileURL = try url(for: relativePath)
         guard FileManager.default.fileExists(atPath: fileURL.path) else { return }
         try FileManager.default.removeItem(at: fileURL)
+    }
+
+    func rawFileData(at relativePath: String) throws -> Data? {
+        let fileURL = try url(for: relativePath)
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            return nil
+        }
+        return try Data(contentsOf: fileURL)
+    }
+
+    func deleteStoreDirectory() throws {
+        guard let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            throw EncryptedFileStoreError.fileURLResolutionFailed
+        }
+
+        let root = base.appendingPathComponent(directoryName)
+        guard FileManager.default.fileExists(atPath: root.path) else { return }
+        try FileManager.default.removeItem(at: root)
     }
 
     private func url(for relativePath: String) throws -> URL {

@@ -17,8 +17,16 @@ enum LocalStorageKeyManagerError: Error {
 }
 
 final class LocalStorageKeyManager {
-    private let service = "com.villovchat.local-storage"
-    private let account = "master-key"
+    private let service: String
+    private let account: String
+
+    init(
+        service: String = "com.villovchat.local-storage",
+        account: String = "master-key"
+    ) {
+        self.service = service
+        self.account = account
+    }
 
     func loadOrCreateMasterKey() throws -> SymmetricKey {
         if let existing = try loadKeyData() {
@@ -32,6 +40,19 @@ final class LocalStorageKeyManager {
         let raw = newKey.withUnsafeBytes { Data($0) }
         try saveKeyData(raw)
         return newKey
+    }
+
+    func deleteMasterKey() throws {
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+
+        let status = SecItemDelete(deleteQuery as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw LocalStorageKeyManagerError.keychainStoreFailed(status)
+        }
     }
 
     private func saveKeyData(_ data: Data) throws {
