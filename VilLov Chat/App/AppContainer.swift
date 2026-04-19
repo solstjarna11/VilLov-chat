@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 26.3.2026.
 //
 
-
 import Foundation
 
 @MainActor
@@ -24,6 +23,7 @@ final class AppContainer {
     let conversationService: ConversationService
     let identityTrustStore: IdentityTrustStore
     let localKeyStore: LocalKeyStore
+    let localSessionStore: LocalSessionStore
 
     init() {
         let providers = AppProviders(
@@ -46,6 +46,7 @@ final class AppContainer {
         )
 
         let localKeyStore = LocalKeyStore()
+        let localSessionStore = LocalSessionStore()
         let identityTrustStore = IdentityTrustStore()
 
         let contactService = ContactService(apiClient: apiClient)
@@ -62,6 +63,7 @@ final class AppContainer {
 
         let e2eeEngine = DefaultE2EEEngine(
             localKeyStore: localKeyStore,
+            localSessionStore: localSessionStore,
             session: session
         )
 
@@ -91,6 +93,7 @@ final class AppContainer {
         self.session = session
         self.identityTrustStore = identityTrustStore
         self.localKeyStore = localKeyStore
+        self.localSessionStore = localSessionStore
 
         self.environment = AppEnvironment(
             session: session,
