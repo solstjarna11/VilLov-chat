@@ -65,7 +65,8 @@ final class ConversationService: ConversationServicing {
 
             try keyDirectoryService.observeRemoteIdentity(
                 userID: decrypted.senderUserID,
-                identityKey: decrypted.senderIdentityKey
+                signingIdentityKey: decrypted.senderSigningIdentityKey,
+                agreementIdentityKey: decrypted.senderAgreementIdentityKey
             )
 
             decryptedMessages.append(decrypted)

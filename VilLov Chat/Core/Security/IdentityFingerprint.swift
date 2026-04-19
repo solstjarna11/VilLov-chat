@@ -10,23 +10,39 @@ import Foundation
 import CryptoKit
 
 enum IdentityFingerprintError: LocalizedError {
-    case invalidBase64IdentityKey
+    case invalidBase64SigningIdentityKey
+    case invalidBase64AgreementIdentityKey
 
     var errorDescription: String? {
         switch self {
-        case .invalidBase64IdentityKey:
-            return "Identity key could not be decoded."
+        case .invalidBase64SigningIdentityKey:
+            return "Signing identity key could not be decoded."
+        case .invalidBase64AgreementIdentityKey:
+            return "Agreement identity key could not be decoded."
         }
     }
 }
 
 enum IdentityFingerprint {
-    static func generate(from identityKeyBase64: String) throws -> String {
-        guard let identityKeyData = Data(base64Encoded: identityKeyBase64) else {
-            throw IdentityFingerprintError.invalidBase64IdentityKey
+    static func generate(
+        signingIdentityKeyBase64: String,
+        agreementIdentityKeyBase64: String
+    ) throws -> String {
+        guard let signingKeyData = Data(base64Encoded: signingIdentityKeyBase64) else {
+            throw IdentityFingerprintError.invalidBase64SigningIdentityKey
         }
 
-        let digest = SHA256.hash(data: identityKeyData)
+        guard let agreementKeyData = Data(base64Encoded: agreementIdentityKeyBase64) else {
+            throw IdentityFingerprintError.invalidBase64AgreementIdentityKey
+        }
+
+        var combined = Data()
+        combined.append(Data("VilLovChat-IdentityFingerprint-v2".utf8))
+        combined.append(signingKeyData)
+        combined.append(Data([0x00]))
+        combined.append(agreementKeyData)
+
+        let digest = SHA256.hash(data: combined)
         let digestData = Data(digest)
 
         let prefix = digestData.prefix(15)

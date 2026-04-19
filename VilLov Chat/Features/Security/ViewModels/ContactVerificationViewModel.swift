@@ -78,13 +78,16 @@ final class ContactVerificationViewModel {
         }
 
         do {
-            let localIdentityKeyBase64 = try localKeyStore.identitySigningPublicKeyBase64(for: currentUserID)
+            let localSigningIdentityKeyBase64 = try localKeyStore.identitySigningPublicKeyBase64(for: currentUserID)
+            let localAgreementIdentityKeyBase64 = try localKeyStore.identityAgreementPublicKeyBase64(for: currentUserID)
 
             return try SharedSafetyNumber.generate(
                 localUserID: currentUserID,
-                localIdentityKeyBase64: localIdentityKeyBase64,
+                localSigningIdentityKeyBase64: localSigningIdentityKeyBase64,
+                localAgreementIdentityKeyBase64: localAgreementIdentityKeyBase64,
                 remoteUserID: remoteUserID,
-                remoteIdentityKeyBase64: remoteIdentity.identityKey
+                remoteSigningIdentityKeyBase64: remoteIdentity.signingIdentityKey,
+                remoteAgreementIdentityKeyBase64: remoteIdentity.agreementIdentityKey
             )
         } catch {
             return "Unavailable"

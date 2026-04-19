@@ -32,7 +32,7 @@ enum E2EEError: LocalizedError {
     case invalidEphemeralPublicKey
     case invalidCiphertext
     case invalidSignature
-    case missingLocalOneTimePrekey
+    case missingRequiredLocalOneTimePrekey
     case decryptionFailed
 
     var errorDescription: String? {
@@ -61,8 +61,8 @@ enum E2EEError: LocalizedError {
             return "Ciphertext is invalid."
         case .invalidSignature:
             return "Message signature verification failed."
-        case .missingLocalOneTimePrekey:
-            return "Matching local one-time prekey was not found."
+        case .missingRequiredLocalOneTimePrekey:
+            return "The message requires a local one-time prekey that is no longer available."
         case .decryptionFailed:
             return "Message decryption failed."
         }
@@ -356,7 +356,8 @@ final class DefaultE2EEEngine: E2EEEngine {
             return DecryptedEnvelopeMessage(
                 id: envelope.id,
                 senderUserID: envelope.senderUserID,
-                senderIdentityKey: header.senderIdentityKey,
+                senderSigningIdentityKey: header.senderIdentityKey,
+                senderAgreementIdentityKey: header.senderIdentityAgreementKey,
                 conversationID: envelope.conversationID,
                 plaintext: plaintext,
                 createdAt: envelope.createdAt

@@ -12,7 +12,8 @@ struct StoredIdentity: Codable, Equatable, Identifiable {
     var id: String { userID }
 
     let userID: String
-    let identityKey: String
+    let signingIdentityKey: String
+    let agreementIdentityKey: String
     let fingerprint: String
     let trustState: ContactTrustState
     let firstSeenAt: Date
@@ -50,7 +51,8 @@ final class IdentityTrustStore {
     @discardableResult
     func upsertIdentity(
         userID: String,
-        identityKey: String,
+        signingIdentityKey: String,
+        agreementIdentityKey: String,
         fingerprint: String,
         currentUserID: String
     ) -> ContactTrustState {
@@ -60,10 +62,14 @@ final class IdentityTrustStore {
         if let index = identities.firstIndex(where: { $0.userID == userID }) {
             let existing = identities[index]
 
-            if existing.identityKey == identityKey {
+            let signingUnchanged = existing.signingIdentityKey == signingIdentityKey
+            let agreementUnchanged = existing.agreementIdentityKey == agreementIdentityKey
+
+            if signingUnchanged && agreementUnchanged {
                 identities[index] = StoredIdentity(
                     userID: existing.userID,
-                    identityKey: existing.identityKey,
+                    signingIdentityKey: existing.signingIdentityKey,
+                    agreementIdentityKey: existing.agreementIdentityKey,
                     fingerprint: existing.fingerprint,
                     trustState: existing.trustState,
                     firstSeenAt: existing.firstSeenAt,
@@ -74,7 +80,8 @@ final class IdentityTrustStore {
             } else {
                 let updated = StoredIdentity(
                     userID: userID,
-                    identityKey: identityKey,
+                    signingIdentityKey: signingIdentityKey,
+                    agreementIdentityKey: agreementIdentityKey,
                     fingerprint: fingerprint,
                     trustState: .changed,
                     firstSeenAt: existing.firstSeenAt,
@@ -87,7 +94,8 @@ final class IdentityTrustStore {
         } else {
             let newIdentity = StoredIdentity(
                 userID: userID,
-                identityKey: identityKey,
+                signingIdentityKey: signingIdentityKey,
+                agreementIdentityKey: agreementIdentityKey,
                 fingerprint: fingerprint,
                 trustState: .unverified,
                 firstSeenAt: now,
@@ -107,7 +115,8 @@ final class IdentityTrustStore {
         let existing = identities[index]
         identities[index] = StoredIdentity(
             userID: existing.userID,
-            identityKey: existing.identityKey,
+            signingIdentityKey: existing.signingIdentityKey,
+            agreementIdentityKey: existing.agreementIdentityKey,
             fingerprint: existing.fingerprint,
             trustState: .verified,
             firstSeenAt: existing.firstSeenAt,

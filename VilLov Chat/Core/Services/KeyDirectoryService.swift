@@ -8,6 +8,10 @@
 
 import Foundation
 
+struct OneTimePreKeyCountResponse: Codable, Equatable {
+    let remaining: Int
+}
+
 @MainActor
 final class KeyDirectoryService {
     private let apiClient: APIClient
@@ -16,6 +20,7 @@ final class KeyDirectoryService {
     private let session: AppSession
 
     private let defaultUploadBatchSize = 50
+    private let defaultReplenishThreshold = 10
 
     init(
         apiClient: APIClient,
@@ -31,7 +36,11 @@ final class KeyDirectoryService {
 
     func fetchRecipientKeyBundle(for userID: String) async throws -> RecipientKeyBundle {
         let bundle: RecipientKeyBundle = try await apiClient.get(.keyBundle(userID: userID))
-        try observeRemoteIdentity(userID: userID, identityKey: bundle.identityKey)
+        try observeRemoteIdentity(
+            userID: userID,
+            signingIdentityKey: bundle.identityKey,
+            agreementIdentityKey: bundle.identityAgreementKey
+        )
         return bundle
     }
 
@@ -50,14 +59,42 @@ final class KeyDirectoryService {
         try await uploadOwnKeyBundle(request)
     }
 
-    func observeRemoteIdentity(userID: String, identityKey: String) throws {
+    func fetchOwnRemainingOPKCount() async throws -> Int {
+        let response: OneTimePreKeyCountResponse = try await apiClient.get(.myOPKCount)
+        return response.remaining
+    }
+
+    func replenishOPKsIfNeeded(
+        for userID: String,
+        threshold: Int = 10,
+        batchSize: Int = 50
+    ) async throws {
+        let remaining = try await fetchOwnRemainingOPKCount()
+        guard remaining < threshold else { return }
+
+        let request = try localKeyStore.uploadBundleRequest(
+            for: userID,
+            oneTimePrekeyCount: batchSize
+        )
+        try await uploadOwnKeyBundle(request)
+    }
+
+    func observeRemoteIdentity(
+        userID: String,
+        signingIdentityKey: String,
+        agreementIdentityKey: String
+    ) throws {
         guard let currentUserID = session.currentUserID else { return }
 
-        let fingerprint = try IdentityFingerprint.generate(from: identityKey)
+        let fingerprint = try IdentityFingerprint.generate(
+            signingIdentityKeyBase64: signingIdentityKey,
+            agreementIdentityKeyBase64: agreementIdentityKey
+        )
 
         _ = identityTrustStore.upsertIdentity(
             userID: userID,
-            identityKey: identityKey,
+            signingIdentityKey: signingIdentityKey,
+            agreementIdentityKey: agreementIdentityKey,
             fingerprint: fingerprint,
             currentUserID: currentUserID
         )

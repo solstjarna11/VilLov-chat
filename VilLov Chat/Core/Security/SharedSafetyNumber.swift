@@ -10,15 +10,21 @@ import Foundation
 import CryptoKit
 
 enum SharedSafetyNumberError: LocalizedError {
-    case invalidLocalIdentityKey
-    case invalidRemoteIdentityKey
+    case invalidLocalSigningIdentityKey
+    case invalidLocalAgreementIdentityKey
+    case invalidRemoteSigningIdentityKey
+    case invalidRemoteAgreementIdentityKey
 
     var errorDescription: String? {
         switch self {
-        case .invalidLocalIdentityKey:
-            return "Local identity key could not be decoded."
-        case .invalidRemoteIdentityKey:
-            return "Remote identity key could not be decoded."
+        case .invalidLocalSigningIdentityKey:
+            return "Local signing identity key could not be decoded."
+        case .invalidLocalAgreementIdentityKey:
+            return "Local agreement identity key could not be decoded."
+        case .invalidRemoteSigningIdentityKey:
+            return "Remote signing identity key could not be decoded."
+        case .invalidRemoteAgreementIdentityKey:
+            return "Remote agreement identity key could not be decoded."
         }
     }
 }
@@ -26,33 +32,45 @@ enum SharedSafetyNumberError: LocalizedError {
 enum SharedSafetyNumber {
     static func generate(
         localUserID: String,
-        localIdentityKeyBase64: String,
+        localSigningIdentityKeyBase64: String,
+        localAgreementIdentityKeyBase64: String,
         remoteUserID: String,
-        remoteIdentityKeyBase64: String
+        remoteSigningIdentityKeyBase64: String,
+        remoteAgreementIdentityKeyBase64: String
     ) throws -> String {
-        guard let localKeyData = Data(base64Encoded: localIdentityKeyBase64) else {
-            throw SharedSafetyNumberError.invalidLocalIdentityKey
+        guard let localSigningKeyData = Data(base64Encoded: localSigningIdentityKeyBase64) else {
+            throw SharedSafetyNumberError.invalidLocalSigningIdentityKey
         }
 
-        guard let remoteKeyData = Data(base64Encoded: remoteIdentityKeyBase64) else {
-            throw SharedSafetyNumberError.invalidRemoteIdentityKey
+        guard let localAgreementKeyData = Data(base64Encoded: localAgreementIdentityKeyBase64) else {
+            throw SharedSafetyNumberError.invalidLocalAgreementIdentityKey
         }
 
-        let orderedPairs: [(String, Data)] = [
-            (localUserID, localKeyData),
-            (remoteUserID, remoteKeyData)
+        guard let remoteSigningKeyData = Data(base64Encoded: remoteSigningIdentityKeyBase64) else {
+            throw SharedSafetyNumberError.invalidRemoteSigningIdentityKey
+        }
+
+        guard let remoteAgreementKeyData = Data(base64Encoded: remoteAgreementIdentityKeyBase64) else {
+            throw SharedSafetyNumberError.invalidRemoteAgreementIdentityKey
+        }
+
+        let orderedPairs: [(String, Data, Data)] = [
+            (localUserID, localSigningKeyData, localAgreementKeyData),
+            (remoteUserID, remoteSigningKeyData, remoteAgreementKeyData)
         ]
         .sorted { lhs, rhs in
             lhs.0 < rhs.0
         }
 
         var combined = Data()
-        combined.append(Data("VilLovChat-SharedSafetyNumber-v1".utf8))
+        combined.append(Data("VilLovChat-SharedSafetyNumber-v2".utf8))
 
-        for (userID, keyData) in orderedPairs {
+        for (userID, signingKeyData, agreementKeyData) in orderedPairs {
             combined.append(Data(userID.utf8))
             combined.append(Data([0x00]))
-            combined.append(keyData)
+            combined.append(signingKeyData)
+            combined.append(Data([0x00]))
+            combined.append(agreementKeyData)
             combined.append(Data([0x00]))
         }
 
