@@ -13,17 +13,20 @@ final class ConversationService: ConversationServicing {
     private let keyDirectoryService: KeyDirectoryService
     private let relayService: RelayService
     private let e2eeEngine: E2EEEngine
+    private let session: AppSession
 
     init(
         apiClient: APIClient,
         keyDirectoryService: KeyDirectoryService,
         relayService: RelayService,
-        e2eeEngine: E2EEEngine
+        e2eeEngine: E2EEEngine,
+        session: AppSession
     ) {
         self.apiClient = apiClient
         self.keyDirectoryService = keyDirectoryService
         self.relayService = relayService
         self.e2eeEngine = e2eeEngine
+        self.session = session
     }
 
     func sendMessage(
@@ -71,6 +74,14 @@ final class ConversationService: ConversationServicing {
 
             decryptedMessages.append(decrypted)
             try await relayService.acknowledge(messageID: envelope.id)
+        }
+
+        if let currentUserID = await MainActor.run(body: { session.currentUserID }) {
+            try? await keyDirectoryService.replenishOPKsIfNeeded(
+                for: currentUserID,
+                threshold: 10,
+                batchSize: 50
+            )
         }
 
         return decryptedMessages.sorted { $0.createdAt < $1.createdAt }

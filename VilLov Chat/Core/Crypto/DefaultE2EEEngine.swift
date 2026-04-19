@@ -281,7 +281,7 @@ final class DefaultE2EEEngine: E2EEEngine {
                 for: recipientUserID,
                 id: oneTimePrekeyId
             ) else {
-                throw E2EEError.missingLocalOneTimePrekey
+                throw E2EEError.missingRequiredLocalOneTimePrekey
             }
 
             let dh1 = try recipientMaterial.signedPrekeyPrivateKey.sharedSecretFromKeyAgreement(

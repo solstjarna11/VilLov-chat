@@ -45,12 +45,6 @@ final class AppContainer {
             credentialStore: DevPasskeyCredentialStore()
         )
 
-        let authService = AuthService(
-            apiClient: apiClient,
-            tokenStore: tokenStore,
-            authenticator: authenticator
-        )
-
         let localKeyStore = LocalKeyStore()
         let identityTrustStore = IdentityTrustStore()
 
@@ -75,7 +69,15 @@ final class AppContainer {
             apiClient: apiClient,
             keyDirectoryService: keyDirectoryService,
             relayService: relayService,
-            e2eeEngine: e2eeEngine
+            e2eeEngine: e2eeEngine,
+            session: session
+        )
+
+        let authService = AuthService(
+            apiClient: apiClient,
+            tokenStore: tokenStore,
+            authenticator: authenticator,
+            keyDirectoryService: keyDirectoryService
         )
 
         self.tokenStore = tokenStore

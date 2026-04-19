@@ -20,7 +20,6 @@ final class SignInViewModel {
     private let authService: AuthService
     private let session: AppSession
     private let rememberedAccountsStore: RememberedAccountsStore
-    private let keyDirectoryService: KeyDirectoryService
 
     init(
         authService: AuthService,
@@ -31,7 +30,6 @@ final class SignInViewModel {
         self.authService = authService
         self.session = session
         self.rememberedAccountsStore = rememberedAccountsStore ?? RememberedAccountsStore()
-        self.keyDirectoryService = keyDirectoryService
 
         self.rememberedAccounts = self.rememberedAccountsStore.loadAccounts()
         self.selectedAccount = self.rememberedAccounts.first
@@ -89,8 +87,6 @@ final class SignInViewModel {
                         userHandle: finalUserID,
                         displayName: finalDisplayName
                     )
-
-                    try await keyDirectoryService.uploadDevelopmentKeyBundleIfNeeded(for: finalUserID)
                 }
 
                 await MainActor.run {
