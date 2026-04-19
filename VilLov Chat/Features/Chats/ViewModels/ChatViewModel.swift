@@ -19,7 +19,7 @@ final class ChatViewModel {
 
     let conversation: Conversation
 
-    private let currentUserID: String
+    let currentUserID: String
     private let messageProvider: MessageProviding
     private let conversationService: ConversationServicing?
     private let localMessageStore: LocalMessageStore

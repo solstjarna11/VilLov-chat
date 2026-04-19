@@ -5,6 +5,7 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
+
 import Foundation
 import Observation
 
@@ -19,13 +20,19 @@ final class NewConversationViewModel {
 
     private let contactService: ContactService
     private let conversationService: ConversationServicing
+    private let identityTrustStore: IdentityTrustStore
+    let currentUserID: String
 
     init(
         contactService: ContactService,
-        conversationService: ConversationServicing
+        conversationService: ConversationServicing,
+        identityTrustStore: IdentityTrustStore,
+        currentUserID: String
     ) {
         self.contactService = contactService
         self.conversationService = conversationService
+        self.identityTrustStore = identityTrustStore
+        self.currentUserID = currentUserID
     }
 
     var filteredContacts: [Contact] {
@@ -63,10 +70,15 @@ final class NewConversationViewModel {
                 let apiContacts = try await contactService.fetchContacts()
 
                 let mapped = apiContacts.map {
-                    Contact(
+                    let trustState = identityTrustStore.identity(
+                        for: $0.userID,
+                        currentUserID: currentUserID
+                    )?.trustState ?? .unverified
+
+                    return Contact(
                         id: UUID(),
                         name: $0.displayName,
-                        trustState: .unverified,
+                        trustState: trustState,
                         userID: $0.userID
                     )
                 }

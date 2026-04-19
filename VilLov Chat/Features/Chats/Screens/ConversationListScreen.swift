@@ -5,6 +5,7 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
+
 import SwiftUI
 import Observation
 
@@ -14,17 +15,23 @@ struct ConversationListScreen: View {
     private let messageProvider: MessageProviding
     private let contactService: ContactService
     private let conversationService: ConversationServicing
+    private let identityTrustStore: IdentityTrustStore
+    private let localKeyStore: LocalKeyStore
 
     init(
         viewModel: ConversationListViewModel,
         messageProvider: MessageProviding,
         contactService: ContactService,
-        conversationService: ConversationServicing
+        conversationService: ConversationServicing,
+        identityTrustStore: IdentityTrustStore,
+        localKeyStore: LocalKeyStore
     ) {
         _viewModel = State(initialValue: viewModel)
         self.messageProvider = messageProvider
         self.contactService = contactService
         self.conversationService = conversationService
+        self.identityTrustStore = identityTrustStore
+        self.localKeyStore = localKeyStore
     }
 
     var body: some View {
@@ -39,7 +46,9 @@ struct ConversationListScreen: View {
                             currentUserID: viewModel.currentUserID,
                             provider: messageProvider,
                             conversationService: conversationService
-                        )
+                        ),
+                        identityTrustStore: identityTrustStore,
+                        localKeyStore: localKeyStore
                     )
                 } label: {
                     ConversationRow(conversation: conversation)
@@ -54,11 +63,15 @@ struct ConversationListScreen: View {
                         NewConversationScreen(
                             viewModel: NewConversationViewModel(
                                 contactService: contactService,
-                                conversationService: conversationService
+                                conversationService: conversationService,
+                                identityTrustStore: identityTrustStore,
+                                currentUserID: viewModel.currentUserID
                             ),
                             currentUserID: viewModel.currentUserID,
                             messageProvider: messageProvider,
-                            conversationService: conversationService
+                            conversationService: conversationService,
+                            identityTrustStore: identityTrustStore,
+                            localKeyStore: localKeyStore
                         )
                     } label: {
                         Image(systemName: "square.and.pencil")

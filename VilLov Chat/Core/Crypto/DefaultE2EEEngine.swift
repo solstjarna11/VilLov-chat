@@ -223,6 +223,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             return DecryptedEnvelopeMessage(
                 id: envelope.id,
                 senderUserID: envelope.senderUserID,
+                senderIdentityKey: header.senderIdentityKey,
                 conversationID: envelope.conversationID,
                 plaintext: plaintext,
                 createdAt: envelope.createdAt

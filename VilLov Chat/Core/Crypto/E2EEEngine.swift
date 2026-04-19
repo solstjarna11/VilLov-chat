@@ -11,6 +11,7 @@ import Foundation
 struct DecryptedEnvelopeMessage: Equatable, Identifiable {
     let id: UUID
     let senderUserID: String
+    let senderIdentityKey: String
     let conversationID: UUID
     let plaintext: String
     let createdAt: Date

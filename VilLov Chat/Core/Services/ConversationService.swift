@@ -66,6 +66,12 @@ final class ConversationService: ConversationServicing {
 
         for envelope in envelopes {
             let decrypted = try await e2eeEngine.decrypt(envelope: envelope)
+
+            try keyDirectoryService.observeRemoteIdentity(
+                userID: decrypted.senderUserID,
+                identityKey: decrypted.senderIdentityKey
+            )
+
             decryptedMessages.append(decrypted)
             try await relayService.acknowledge(messageID: envelope.id)
             print("Acknowledged message:", envelope.id.uuidString)

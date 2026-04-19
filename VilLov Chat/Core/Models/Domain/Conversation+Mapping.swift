@@ -5,6 +5,7 @@
 //  Created by Lovísa Sól on 12.4.2026.
 //
 
+
 import Foundation
 
 extension Conversation {

@@ -5,6 +5,7 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
+
 import SwiftUI
 import Observation
 
@@ -15,17 +16,23 @@ struct NewConversationScreen: View {
     private let currentUserID: String
     private let messageProvider: MessageProviding
     private let conversationService: ConversationServicing
+    private let identityTrustStore: IdentityTrustStore
+    private let localKeyStore: LocalKeyStore
 
     init(
         viewModel: NewConversationViewModel,
         currentUserID: String,
         messageProvider: MessageProviding,
-        conversationService: ConversationServicing
+        conversationService: ConversationServicing,
+        identityTrustStore: IdentityTrustStore,
+        localKeyStore: LocalKeyStore
     ) {
         _viewModel = State(initialValue: viewModel)
         self.currentUserID = currentUserID
         self.messageProvider = messageProvider
         self.conversationService = conversationService
+        self.identityTrustStore = identityTrustStore
+        self.localKeyStore = localKeyStore
     }
 
     var body: some View {
@@ -67,10 +74,12 @@ struct NewConversationScreen: View {
             ChatScreen(
                 viewModel: ChatViewModel(
                     conversation: conversation,
-                    currentUserID: currentUserID,
+                    currentUserID: viewModel.currentUserID,
                     provider: messageProvider,
                     conversationService: conversationService
-                )
+                ),
+                identityTrustStore: identityTrustStore,
+                localKeyStore: localKeyStore
             )
         }
         .alert(

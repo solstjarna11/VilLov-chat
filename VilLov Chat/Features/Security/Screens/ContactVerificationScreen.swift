@@ -5,6 +5,7 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
+
 import SwiftUI
 import Observation
 
@@ -41,6 +42,13 @@ struct ContactVerificationScreen: View {
 
             Text("Verification helps confirm that you are communicating with the intended person and not an attacker intercepting keys.")
                 .foregroundStyle(.secondary)
+
+            if viewModel.canMarkVerified {
+                Button("Mark as Verified") {
+                    viewModel.markAsVerified()
+                }
+                .buttonStyle(.borderedProminent)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
@@ -108,5 +116,3 @@ struct ContactVerificationScreen: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 }
-
-

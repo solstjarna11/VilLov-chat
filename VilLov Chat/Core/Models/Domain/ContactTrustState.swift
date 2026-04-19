@@ -10,4 +10,5 @@ import Foundation
 enum ContactTrustState: String, Codable, CaseIterable, Hashable {
     case verified
     case unverified
+    case changed
 }
