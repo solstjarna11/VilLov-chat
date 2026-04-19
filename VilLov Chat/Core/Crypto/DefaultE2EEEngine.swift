@@ -14,6 +14,7 @@ private struct E2EEHeader: Codable {
     let senderIdentityKey: String
     let senderIdentityAgreementKey: String
     let ephemeralPublicKey: String?
+    let ratchetPublicKey: String?
     let signature: String
     let oneTimePrekeyId: String?
     let handshakeMode: HandshakeMode?
@@ -32,12 +33,14 @@ enum E2EEError: LocalizedError {
     case invalidSenderIdentityKey
     case invalidSenderIdentityAgreementKey
     case invalidEphemeralPublicKey
+    case invalidRatchetPublicKey
     case invalidCiphertext
     case invalidSignature
     case missingRequiredLocalOneTimePrekey
     case decryptionFailed
     case missingConversationPeer
     case missingSessionBootstrapMaterial
+    case missingLocalRatchetKey
 
     var errorDescription: String? {
         switch self {
@@ -61,6 +64,8 @@ enum E2EEError: LocalizedError {
             return "Sender agreement identity key is invalid."
         case .invalidEphemeralPublicKey:
             return "Ephemeral public key is invalid."
+        case .invalidRatchetPublicKey:
+            return "Ratchet public key is invalid."
         case .invalidCiphertext:
             return "Ciphertext is invalid."
         case .invalidSignature:
@@ -73,6 +78,8 @@ enum E2EEError: LocalizedError {
             return "Conversation peer information is missing."
         case .missingSessionBootstrapMaterial:
             return "Session bootstrap material is missing."
+        case .missingLocalRatchetKey:
+            return "Local ratchet key is missing."
         }
     }
 }
@@ -233,6 +240,9 @@ final class DefaultE2EEEngine: E2EEEngine {
         let ephemeralPrivateKey = Curve25519.KeyAgreement.PrivateKey()
         let ephemeralPublicKeyData = ephemeralPrivateKey.publicKey.rawRepresentation
 
+        let initialRatchetPrivateKey = Curve25519.KeyAgreement.PrivateKey()
+        let initialRatchetPublicKeyData = initialRatchetPrivateKey.publicKey.rawRepresentation
+
         let handshakeMode: HandshakeMode
         let oneTimePrekeyId: String?
         let initialRootKey: Data
@@ -249,18 +259,10 @@ final class DefaultE2EEEngine: E2EEEngine {
                 rawRepresentation: recipientOneTimePrekeyData
             )
 
-            let dh1 = try senderMaterial.identityAgreementPrivateKey.sharedSecretFromKeyAgreement(
-                with: recipientSignedPrekeyPublicKey
-            )
-            let dh2 = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(
-                with: recipientIdentityAgreementPublicKey
-            )
-            let dh3 = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(
-                with: recipientSignedPrekeyPublicKey
-            )
-            let dh4 = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(
-                with: recipientOneTimePrekeyPublicKey
-            )
+            let dh1 = try senderMaterial.identityAgreementPrivateKey.sharedSecretFromKeyAgreement(with: recipientSignedPrekeyPublicKey)
+            let dh2 = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(with: recipientIdentityAgreementPublicKey)
+            let dh3 = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(with: recipientSignedPrekeyPublicKey)
+            let dh4 = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(with: recipientOneTimePrekeyPublicKey)
 
             initialRootKey = deriveInitialRootKey(
                 dhParts: [dh1, dh2, dh3, dh4],
@@ -274,9 +276,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             handshakeMode = .prekey
             oneTimePrekeyId = recipientOneTimePrekeyID
         } else {
-            let dh1 = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(
-                with: recipientSignedPrekeyPublicKey
-            )
+            let dh1 = try ephemeralPrivateKey.sharedSecretFromKeyAgreement(with: recipientSignedPrekeyPublicKey)
 
             initialRootKey = deriveInitialRootKey(
                 dhParts: [dh1],
@@ -301,7 +301,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             rootKey: initialRootKey,
             sendingChainKey: DoubleRatchet.deriveInitialChainKey(rootKey: initialRootKey, label: "sender"),
             receivingChainKey: DoubleRatchet.deriveInitialChainKey(rootKey: initialRootKey, label: "receiver"),
-            localRatchetPrivateKey: nil,
+            localRatchetPrivateKey: initialRatchetPrivateKey.rawRepresentation,
             remoteRatchetPublicKey: nil,
             sendMessageNumber: 0,
             receiveMessageNumber: 0,
@@ -320,7 +320,8 @@ final class DefaultE2EEEngine: E2EEEngine {
             sessionState: &sessionState,
             bootstrapEphemeralPublicKeyData: ephemeralPublicKeyData,
             bootstrapHandshakeMode: handshakeMode,
-            bootstrapOneTimePrekeyId: oneTimePrekeyId
+            bootstrapOneTimePrekeyId: oneTimePrekeyId,
+            ratchetPublicKeyData: initialRatchetPublicKeyData
         )
 
         try localSessionStore.saveSession(sessionState)
@@ -336,6 +337,13 @@ final class DefaultE2EEEngine: E2EEEngine {
     ) throws -> (ciphertext: String, header: String) {
         var mutableSession = sessionState
 
+        let localRatchetPrivateKeyData = mutableSession.localRatchetPrivateKey
+        let localRatchetPrivateKey = try localRatchetPrivateKeyData.map {
+            try Curve25519.KeyAgreement.PrivateKey(rawRepresentation: $0)
+        }
+
+        let ratchetPublicKeyData = localRatchetPrivateKey?.publicKey.rawRepresentation
+
         let result = try encryptAndAdvanceSession(
             plaintext: plaintext,
             conversationID: conversationID,
@@ -346,7 +354,8 @@ final class DefaultE2EEEngine: E2EEEngine {
             sessionState: &mutableSession,
             bootstrapEphemeralPublicKeyData: nil,
             bootstrapHandshakeMode: nil,
-            bootstrapOneTimePrekeyId: nil
+            bootstrapOneTimePrekeyId: nil,
+            ratchetPublicKeyData: ratchetPublicKeyData
         )
 
         try localSessionStore.saveSession(mutableSession)
@@ -363,7 +372,8 @@ final class DefaultE2EEEngine: E2EEEngine {
         sessionState: inout RatchetSession,
         bootstrapEphemeralPublicKeyData: Data?,
         bootstrapHandshakeMode: HandshakeMode?,
-        bootstrapOneTimePrekeyId: String?
+        bootstrapOneTimePrekeyId: String?,
+        ratchetPublicKeyData: Data?
     ) throws -> (ciphertext: String, header: String) {
         guard let chainKey = sessionState.sendingChainKey else {
             throw E2EEError.missingSessionBootstrapMaterial
@@ -380,12 +390,13 @@ final class DefaultE2EEEngine: E2EEEngine {
         }
 
         let signedContext = signingContext(
-            version: 3,
+            version: 4,
             conversationID: conversationID,
             senderUserID: senderUserID,
             recipientUserID: recipientUserID,
             senderIdentityAgreementKeyData: senderAgreementPublicKeyData,
             ephemeralPublicKeyData: bootstrapEphemeralPublicKeyData ?? Data(),
+            ratchetPublicKeyData: ratchetPublicKeyData ?? Data(),
             oneTimePrekeyId: bootstrapOneTimePrekeyId,
             handshakeMode: bootstrapHandshakeMode,
             messageNumber: messageNumber,
@@ -396,10 +407,11 @@ final class DefaultE2EEEngine: E2EEEngine {
         let signature = try senderSigningPrivateKey.signature(for: signedContext)
 
         let header = E2EEHeader(
-            version: 3,
+            version: 4,
             senderIdentityKey: senderSigningPrivateKey.publicKey.rawRepresentation.base64EncodedString(),
             senderIdentityAgreementKey: senderAgreementPublicKeyData.base64EncodedString(),
             ephemeralPublicKey: bootstrapEphemeralPublicKeyData?.base64EncodedString(),
+            ratchetPublicKey: ratchetPublicKeyData?.base64EncodedString(),
             signature: signature.base64EncodedString(),
             oneTimePrekeyId: bootstrapOneTimePrekeyId,
             handshakeMode: bootstrapHandshakeMode,
@@ -455,9 +467,17 @@ final class DefaultE2EEEngine: E2EEEngine {
             throw E2EEError.invalidEphemeralPublicKey
         }
 
-        let ephemeralPublicKey = try Curve25519.KeyAgreement.PublicKey(
-            rawRepresentation: ephemeralPublicKeyData
-        )
+        let ephemeralPublicKey = try Curve25519.KeyAgreement.PublicKey(rawRepresentation: ephemeralPublicKeyData)
+
+        let initialRemoteRatchetPublicKey: Curve25519.KeyAgreement.PublicKey?
+        if let ratchetPublicKeyBase64 = header.ratchetPublicKey {
+            guard let ratchetPublicKeyData = Data(base64Encoded: ratchetPublicKeyBase64) else {
+                throw E2EEError.invalidRatchetPublicKey
+            }
+            initialRemoteRatchetPublicKey = try Curve25519.KeyAgreement.PublicKey(rawRepresentation: ratchetPublicKeyData)
+        } else {
+            initialRemoteRatchetPublicKey = nil
+        }
 
         guard let signatureData = Data(base64Encoded: header.signature) else {
             throw E2EEError.invalidSignature
@@ -479,18 +499,10 @@ final class DefaultE2EEEngine: E2EEEngine {
                 throw E2EEError.missingRequiredLocalOneTimePrekey
             }
 
-            let dh1 = try recipientMaterial.signedPrekeyPrivateKey.sharedSecretFromKeyAgreement(
-                with: senderAgreementPublicKey
-            )
-            let dh2 = try recipientMaterial.identityAgreementPrivateKey.sharedSecretFromKeyAgreement(
-                with: ephemeralPublicKey
-            )
-            let dh3 = try recipientMaterial.signedPrekeyPrivateKey.sharedSecretFromKeyAgreement(
-                with: ephemeralPublicKey
-            )
-            let dh4 = try localOPK.sharedSecretFromKeyAgreement(
-                with: ephemeralPublicKey
-            )
+            let dh1 = try recipientMaterial.signedPrekeyPrivateKey.sharedSecretFromKeyAgreement(with: senderAgreementPublicKey)
+            let dh2 = try recipientMaterial.identityAgreementPrivateKey.sharedSecretFromKeyAgreement(with: ephemeralPublicKey)
+            let dh3 = try recipientMaterial.signedPrekeyPrivateKey.sharedSecretFromKeyAgreement(with: ephemeralPublicKey)
+            let dh4 = try localOPK.sharedSecretFromKeyAgreement(with: ephemeralPublicKey)
 
             initialRootKey = deriveInitialRootKey(
                 dhParts: [dh1, dh2, dh3, dh4],
@@ -504,9 +516,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             consumedOneTimePrekeyId = oneTimePrekeyId
 
         case .fallback:
-            let dh1 = try recipientMaterial.signedPrekeyPrivateKey.sharedSecretFromKeyAgreement(
-                with: ephemeralPublicKey
-            )
+            let dh1 = try recipientMaterial.signedPrekeyPrivateKey.sharedSecretFromKeyAgreement(with: ephemeralPublicKey)
 
             initialRootKey = deriveInitialRootKey(
                 dhParts: [dh1],
@@ -534,6 +544,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             recipientUserID: envelope.recipientUserID,
             senderIdentityAgreementKeyData: senderIdentityAgreementKeyData,
             ephemeralPublicKeyData: ephemeralPublicKeyData,
+            ratchetPublicKeyData: initialRemoteRatchetPublicKey?.rawRepresentation ?? Data(),
             oneTimePrekeyId: header.oneTimePrekeyId,
             handshakeMode: header.handshakeMode,
             messageNumber: header.messageNumber,
@@ -557,6 +568,8 @@ final class DefaultE2EEEngine: E2EEEngine {
                 )
             }
 
+            let localRatchetPrivateKey = Curve25519.KeyAgreement.PrivateKey()
+
             let sessionState = RatchetSession(
                 id: UUID(),
                 conversationID: envelope.conversationID,
@@ -567,8 +580,8 @@ final class DefaultE2EEEngine: E2EEEngine {
                 rootKey: initialRootKey,
                 sendingChainKey: initialReceivingChain,
                 receivingChainKey: receiveStep.nextChainKey,
-                localRatchetPrivateKey: nil,
-                remoteRatchetPublicKey: nil,
+                localRatchetPrivateKey: localRatchetPrivateKey.rawRepresentation,
+                remoteRatchetPublicKey: initialRemoteRatchetPublicKey?.rawRepresentation,
                 sendMessageNumber: 0,
                 receiveMessageNumber: 1,
                 previousSendingChainLength: 0,
@@ -606,7 +619,73 @@ final class DefaultE2EEEngine: E2EEEngine {
             throw E2EEError.invalidSignature
         }
 
-        guard let receivingChainKey = sessionState.receivingChainKey else {
+        var mutableSession = sessionState
+
+        var ephemeralData = Data()
+        var ratchetData = Data()
+
+        let incomingRatchetPublicKey: Curve25519.KeyAgreement.PublicKey?
+        if let ratchetPublicKeyBase64 = header.ratchetPublicKey {
+            guard let ratchetPublicKeyRaw = Data(base64Encoded: ratchetPublicKeyBase64) else {
+                throw E2EEError.invalidRatchetPublicKey
+            }
+            ratchetData = ratchetPublicKeyRaw
+            incomingRatchetPublicKey = try Curve25519.KeyAgreement.PublicKey(rawRepresentation: ratchetPublicKeyRaw)
+        } else {
+            incomingRatchetPublicKey = nil
+        }
+
+        if let incomingRatchetPublicKey {
+            let currentRemoteRaw = mutableSession.remoteRatchetPublicKey
+            let incomingRaw = incomingRatchetPublicKey.rawRepresentation
+
+            if currentRemoteRaw != incomingRaw {
+                guard let localRatchetPrivateRaw = mutableSession.localRatchetPrivateKey else {
+                    throw E2EEError.missingLocalRatchetKey
+                }
+
+                let localRatchetPrivate = try Curve25519.KeyAgreement.PrivateKey(rawRepresentation: localRatchetPrivateRaw)
+                let dh = try localRatchetPrivate.sharedSecretFromKeyAgreement(with: incomingRatchetPublicKey)
+
+                let receiveStepRoot = DoubleRatchet.deriveRootStep(
+                    rootKey: mutableSession.rootKey,
+                    dhOutput: dh,
+                    senderLabel: "sender",
+                    receiverLabel: "receiver"
+                )
+
+                let newLocalRatchetPrivate = Curve25519.KeyAgreement.PrivateKey()
+                let senderDH = try newLocalRatchetPrivate.sharedSecretFromKeyAgreement(with: incomingRatchetPublicKey)
+
+                let sendStepRoot = DoubleRatchet.deriveRootStep(
+                    rootKey: receiveStepRoot.nextRootKey,
+                    dhOutput: senderDH,
+                    senderLabel: "sender",
+                    receiverLabel: "receiver"
+                )
+
+                mutableSession = RatchetSession(
+                    id: mutableSession.id,
+                    conversationID: mutableSession.conversationID,
+                    localUserID: mutableSession.localUserID,
+                    remoteUserID: mutableSession.remoteUserID,
+                    remoteSigningIdentityKey: mutableSession.remoteSigningIdentityKey,
+                    remoteAgreementIdentityKey: mutableSession.remoteAgreementIdentityKey,
+                    rootKey: sendStepRoot.nextRootKey,
+                    sendingChainKey: sendStepRoot.sendingChainKey,
+                    receivingChainKey: receiveStepRoot.receivingChainKey,
+                    localRatchetPrivateKey: newLocalRatchetPrivate.rawRepresentation,
+                    remoteRatchetPublicKey: incomingRaw,
+                    sendMessageNumber: 0,
+                    receiveMessageNumber: 0,
+                    previousSendingChainLength: mutableSession.sendMessageNumber,
+                    createdAt: mutableSession.createdAt,
+                    updatedAt: Date()
+                )
+            }
+        }
+
+        guard let receivingChainKey = mutableSession.receivingChainKey else {
             throw E2EEError.missingSessionBootstrapMaterial
         }
 
@@ -618,7 +697,8 @@ final class DefaultE2EEEngine: E2EEEngine {
             senderUserID: envelope.senderUserID,
             recipientUserID: envelope.recipientUserID,
             senderIdentityAgreementKeyData: senderIdentityAgreementKeyData,
-            ephemeralPublicKeyData: Data(),
+            ephemeralPublicKeyData: ephemeralData,
+            ratchetPublicKeyData: ratchetData,
             oneTimePrekeyId: nil,
             handshakeMode: nil,
             messageNumber: header.messageNumber,
@@ -636,21 +716,21 @@ final class DefaultE2EEEngine: E2EEEngine {
             let plaintext = String(decoding: plaintextData, as: UTF8.self)
 
             let updatedSession = RatchetSession(
-                id: sessionState.id,
-                conversationID: sessionState.conversationID,
-                localUserID: sessionState.localUserID,
-                remoteUserID: sessionState.remoteUserID,
-                remoteSigningIdentityKey: sessionState.remoteSigningIdentityKey,
-                remoteAgreementIdentityKey: sessionState.remoteAgreementIdentityKey,
-                rootKey: sessionState.rootKey,
-                sendingChainKey: sessionState.sendingChainKey,
+                id: mutableSession.id,
+                conversationID: mutableSession.conversationID,
+                localUserID: mutableSession.localUserID,
+                remoteUserID: mutableSession.remoteUserID,
+                remoteSigningIdentityKey: mutableSession.remoteSigningIdentityKey,
+                remoteAgreementIdentityKey: mutableSession.remoteAgreementIdentityKey,
+                rootKey: mutableSession.rootKey,
+                sendingChainKey: mutableSession.sendingChainKey,
                 receivingChainKey: receiveStep.nextChainKey,
-                localRatchetPrivateKey: sessionState.localRatchetPrivateKey,
-                remoteRatchetPublicKey: sessionState.remoteRatchetPublicKey,
-                sendMessageNumber: sessionState.sendMessageNumber,
-                receiveMessageNumber: sessionState.receiveMessageNumber + 1,
-                previousSendingChainLength: sessionState.previousSendingChainLength,
-                createdAt: sessionState.createdAt,
+                localRatchetPrivateKey: mutableSession.localRatchetPrivateKey,
+                remoteRatchetPublicKey: mutableSession.remoteRatchetPublicKey,
+                sendMessageNumber: mutableSession.sendMessageNumber,
+                receiveMessageNumber: mutableSession.receiveMessageNumber + 1,
+                previousSendingChainLength: mutableSession.previousSendingChainLength,
+                createdAt: mutableSession.createdAt,
                 updatedAt: Date()
             )
 
@@ -736,7 +816,7 @@ final class DefaultE2EEEngine: E2EEEngine {
     }
 
     private var protocolSalt: Data {
-        Data("VilLovChat-E2EE-v3".utf8)
+        Data("VilLovChat-E2EE-v4".utf8)
     }
 
     private func sharedInfo(
@@ -747,7 +827,7 @@ final class DefaultE2EEEngine: E2EEEngine {
         senderAgreementIdentityKeyData: Data
     ) -> Data {
         var data = Data()
-        data.append(Data("VilLovChat-X3DH-Root-v3".utf8))
+        data.append(Data("VilLovChat-X3DH-Root-v4".utf8))
         data.append(Data(conversationID.uuidString.utf8))
         data.append(Data(senderUserID.utf8))
         data.append(Data(recipientUserID.utf8))
@@ -763,6 +843,7 @@ final class DefaultE2EEEngine: E2EEEngine {
         recipientUserID: String,
         senderIdentityAgreementKeyData: Data,
         ephemeralPublicKeyData: Data,
+        ratchetPublicKeyData: Data,
         oneTimePrekeyId: String?,
         handshakeMode: HandshakeMode?,
         messageNumber: Int,
@@ -770,13 +851,14 @@ final class DefaultE2EEEngine: E2EEEngine {
         sealedCombined: Data
     ) -> Data {
         var data = Data()
-        data.append(Data("VilLovChat-E2EE-sign-v3".utf8))
+        data.append(Data("VilLovChat-E2EE-sign-v4".utf8))
         data.append(Data(String(version).utf8))
         data.append(Data(conversationID.uuidString.utf8))
         data.append(Data(senderUserID.utf8))
         data.append(Data(recipientUserID.utf8))
         data.append(senderIdentityAgreementKeyData)
         data.append(ephemeralPublicKeyData)
+        data.append(ratchetPublicKeyData)
         data.append(Data((oneTimePrekeyId ?? "").utf8))
         data.append(Data((handshakeMode?.rawValue ?? "").utf8))
         data.append(Data(String(messageNumber).utf8))

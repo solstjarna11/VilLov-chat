@@ -47,4 +47,35 @@ enum DoubleRatchet {
 
         return derived.withUnsafeBytes { Data($0) }
     }
+
+    static func deriveRootStep(
+        rootKey: Data,
+        dhOutput: SharedSecret,
+        senderLabel: String,
+        receiverLabel: String
+    ) -> (nextRootKey: Data, sendingChainKey: Data, receivingChainKey: Data) {
+        let dhData = dhOutput.withUnsafeBytes { Data($0) }
+        let inputKey = SymmetricKey(data: dhData)
+
+        let expanded = HKDF<SHA256>.deriveKey(
+            inputKeyMaterial: inputKey,
+            salt: rootKey,
+            info: Data("VilLovChat-DH-Ratchet-v1".utf8),
+            outputByteCount: 96
+        )
+
+        let expandedData = expanded.withUnsafeBytes { Data($0) }
+        let nextRootKey = Data(expandedData[0..<32])
+        let senderSeed = Data(expandedData[32..<64])
+        let receiverSeed = Data(expandedData[64..<96])
+
+        let sendingChainKey = deriveInitialChainKey(rootKey: senderSeed, label: senderLabel)
+        let receivingChainKey = deriveInitialChainKey(rootKey: receiverSeed, label: receiverLabel)
+
+        return (
+            nextRootKey: nextRootKey,
+            sendingChainKey: sendingChainKey,
+            receivingChainKey: receivingChainKey
+        )
+    }
 }
