@@ -24,6 +24,8 @@ final class ChatViewModel {
     private let conversationService: ConversationServicing?
     private let localMessageStore: LocalMessageStore
 
+    private let failedDecryptPlaceholderText = "Message could not be decrypted."
+
     init(
         conversation: Conversation,
         currentUserID: String,
@@ -121,6 +123,7 @@ final class ChatViewModel {
 
                 await MainActor.run {
                     self.mergeInboxMessages(result.messages)
+                    self.mergeInboxFailures(result.failures)
 
                     if !result.failures.isEmpty {
                         self.errorMessage = """
@@ -139,7 +142,7 @@ final class ChatViewModel {
             }
         }
     }
-    
+
     private func mergeInboxMessages(_ inboxMessages: [DecryptedEnvelopeMessage]) {
         let matchingConversationMessages = inboxMessages.filter {
             $0.conversationID == conversation.id
@@ -157,6 +160,28 @@ final class ChatViewModel {
 
         messages = localMessageStore.mergeIncomingMessages(
             newMessages,
+            for: conversation.id,
+            currentUserID: currentUserID
+        )
+    }
+
+    private func mergeInboxFailures(_ failures: [InboxMessageFailure]) {
+        let matchingFailures = failures.filter { $0.conversationID == conversation.id }
+
+        guard !matchingFailures.isEmpty else { return }
+
+        let placeholderMessages = matchingFailures.map { failure in
+            Message(
+                id: failure.envelopeID,
+                text: failedDecryptPlaceholderText,
+                isIncoming: true,
+                timestamp: failure.createdAt,
+                status: .failed
+            )
+        }
+
+        messages = localMessageStore.mergeIncomingMessages(
+            placeholderMessages,
             for: conversation.id,
             currentUserID: currentUserID
         )

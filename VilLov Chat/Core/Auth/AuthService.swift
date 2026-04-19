@@ -30,15 +30,18 @@ final class AuthService {
     private let apiClient: APIClient
     private let tokenStore: AuthTokenStore
     private let authenticator: PasskeyAuthenticating
+    private let keyDirectoryService: KeyDirectoryService
 
     init(
         apiClient: APIClient,
         tokenStore: AuthTokenStore,
-        authenticator: PasskeyAuthenticating
+        authenticator: PasskeyAuthenticating,
+        keyDirectoryService: KeyDirectoryService
     ) {
         self.apiClient = apiClient
         self.tokenStore = tokenStore
         self.authenticator = authenticator
+        self.keyDirectoryService = keyDirectoryService
     }
 
     func registerWithPasskey(

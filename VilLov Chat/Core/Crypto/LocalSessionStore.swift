@@ -25,11 +25,10 @@ protocol LocalSessionStoring {
 
 @MainActor
 final class LocalSessionStore: LocalSessionStoring {
-    private let defaults: UserDefaults
-    private let keyPrefix = "ratchet_session_"
+    private let encryptedStore: EncryptedFileStore
 
-    init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    init(encryptedStore: EncryptedFileStore? = nil) {
+        self.encryptedStore = encryptedStore ?? EncryptedFileStore()
     }
 
     func loadSession(
@@ -37,28 +36,29 @@ final class LocalSessionStore: LocalSessionStoring {
         localUserID: String,
         remoteUserID: String
     ) -> RatchetSession? {
-        let key = storageKey(
-            conversationID: conversationID,
-            localUserID: localUserID,
-            remoteUserID: remoteUserID
-        )
-
-        guard let data = defaults.data(forKey: key) else {
+        do {
+            return try encryptedStore.load(
+                RatchetSession.self,
+                from: storagePath(
+                    conversationID: conversationID,
+                    localUserID: localUserID,
+                    remoteUserID: remoteUserID
+                )
+            )
+        } catch {
             return nil
         }
-
-        return try? JSONDecoder().decode(RatchetSession.self, from: data)
     }
 
     func saveSession(_ session: RatchetSession) throws {
-        let key = storageKey(
-            conversationID: session.conversationID,
-            localUserID: session.localUserID,
-            remoteUserID: session.remoteUserID
+        try encryptedStore.save(
+            session,
+            to: storagePath(
+                conversationID: session.conversationID,
+                localUserID: session.localUserID,
+                remoteUserID: session.remoteUserID
+            )
         )
-
-        let data = try JSONEncoder().encode(session)
-        defaults.set(data, forKey: key)
     }
 
     func deleteSession(
@@ -66,19 +66,20 @@ final class LocalSessionStore: LocalSessionStoring {
         localUserID: String,
         remoteUserID: String
     ) throws {
-        let key = storageKey(
-            conversationID: conversationID,
-            localUserID: localUserID,
-            remoteUserID: remoteUserID
+        try encryptedStore.delete(
+            at: storagePath(
+                conversationID: conversationID,
+                localUserID: localUserID,
+                remoteUserID: remoteUserID
+            )
         )
-        defaults.removeObject(forKey: key)
     }
 
-    private func storageKey(
+    private func storagePath(
         conversationID: UUID,
         localUserID: String,
         remoteUserID: String
     ) -> String {
-        keyPrefix + localUserID + "_" + remoteUserID + "_" + conversationID.uuidString
+        "sessions/\(localUserID)_\(remoteUserID)_\(conversationID.uuidString).json.enc"
     }
 }
