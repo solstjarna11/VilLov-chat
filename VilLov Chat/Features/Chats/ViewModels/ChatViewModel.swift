@@ -117,10 +117,18 @@ final class ChatViewModel {
 
         Task {
             do {
-                let inboxMessages = try await conversationService.fetchInbox()
+                let result = try await conversationService.fetchInboxResilient()
 
                 await MainActor.run {
-                    self.mergeInboxMessages(inboxMessages)
+                    self.mergeInboxMessages(result.messages)
+
+                    if !result.failures.isEmpty {
+                        self.errorMessage = """
+                        Refreshed inbox, but \(result.failures.count) \
+                        message(s) could not be decrypted.
+                        """
+                    }
+
                     self.isRefreshingInbox = false
                 }
             } catch {
@@ -131,7 +139,7 @@ final class ChatViewModel {
             }
         }
     }
-
+    
     private func mergeInboxMessages(_ inboxMessages: [DecryptedEnvelopeMessage]) {
         let matchingConversationMessages = inboxMessages.filter {
             $0.conversationID == conversation.id

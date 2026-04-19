@@ -8,6 +8,20 @@
 
 import Foundation
 
+struct InboxRefreshResult {
+    let messages: [DecryptedEnvelopeMessage]
+    let failures: [InboxMessageFailure]
+}
+
+struct InboxMessageFailure: Identifiable, Equatable {
+    let id: UUID
+    let envelopeID: UUID
+    let senderUserID: String
+    let conversationID: UUID
+    let reason: String
+    let createdAt: Date
+}
+
 protocol ConversationServicing {
     func sendMessage(
         plaintext: String,
@@ -16,6 +30,8 @@ protocol ConversationServicing {
     ) async throws
 
     func fetchInbox() async throws -> [DecryptedEnvelopeMessage]
+
+    func fetchInboxResilient() async throws -> InboxRefreshResult
 
     func getOrCreateConversation(with recipientUserID: String) async throws -> UUID
 }
