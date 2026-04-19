@@ -15,6 +15,8 @@ final class KeyDirectoryService {
     private let identityTrustStore: IdentityTrustStore
     private let session: AppSession
 
+    private let defaultUploadBatchSize = 50
+
     init(
         apiClient: APIClient,
         localKeyStore: LocalKeyStore,
@@ -37,11 +39,17 @@ final class KeyDirectoryService {
         let _: RecipientKeyBundle = try await apiClient.post(.uploadKeys, body: request)
     }
 
-    func uploadDevelopmentKeyBundleIfNeeded(for userID: String) async throws {
-        let request = try localKeyStore.uploadBundleRequest(for: userID)
+    func uploadKeyBundleIfNeeded(
+        for userID: String,
+        desiredOPKBatchSize: Int? = nil
+    ) async throws {
+        let request = try localKeyStore.uploadBundleRequest(
+            for: userID,
+            oneTimePrekeyCount: desiredOPKBatchSize ?? defaultUploadBatchSize
+        )
         try await uploadOwnKeyBundle(request)
     }
-    
+
     func observeRemoteIdentity(userID: String, identityKey: String) throws {
         guard let currentUserID = session.currentUserID else { return }
 
