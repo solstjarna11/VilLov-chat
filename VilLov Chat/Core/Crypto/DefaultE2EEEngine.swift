@@ -88,14 +88,18 @@ final class DefaultE2EEEngine: E2EEEngine {
     private let localKeyStore: LocalKeyStore
     private let localSessionStore: LocalSessionStore
     private let session: AppSession
+    private let localSkippedKeyStore: LocalSkippedKeyStore
+    private let maxSkipWindow = 50
 
     init(
         localKeyStore: LocalKeyStore,
         localSessionStore: LocalSessionStore,
+        localSkippedKeyStore: LocalSkippedKeyStore,
         session: AppSession
     ) {
         self.localKeyStore = localKeyStore
         self.localSessionStore = localSessionStore
+        self.localSkippedKeyStore = localSkippedKeyStore
         self.session = session
     }
 
@@ -685,6 +689,92 @@ final class DefaultE2EEEngine: E2EEEngine {
             }
         }
 
+        let signedContext = signingContext(
+            version: header.version,
+            conversationID: envelope.conversationID,
+            senderUserID: envelope.senderUserID,
+            recipientUserID: envelope.recipientUserID,
+            senderIdentityAgreementKeyData: senderIdentityAgreementKeyData,
+            ephemeralPublicKeyData: ephemeralData,
+            ratchetPublicKeyData: ratchetData,
+            oneTimePrekeyId: nil,
+            handshakeMode: nil,
+            messageNumber: header.messageNumber,
+            previousChainLength: header.previousChainLength,
+            sealedCombined: sealedCombined
+        )
+
+        guard senderSigningPublicKey.isValidSignature(signatureData, for: signedContext) else {
+            throw E2EEError.invalidSignature
+        }
+
+        if let plaintext = try decryptWithSkippedKeyIfAvailable(
+            envelope: envelope,
+            messageNumber: header.messageNumber,
+            sealedCombined: sealedCombined
+        ) {
+            return DecryptedEnvelopeMessage(
+                id: envelope.id,
+                senderUserID: envelope.senderUserID,
+                senderSigningIdentityKey: header.senderIdentityKey,
+                senderAgreementIdentityKey: header.senderIdentityAgreementKey,
+                conversationID: envelope.conversationID,
+                plaintext: plaintext,
+                createdAt: envelope.createdAt
+            )
+        }
+
+        try cacheSkippedKeysIfNeeded(
+            sessionState: &mutableSession,
+            until: header.messageNumber
+        )
+
+        guard let receivingChainKey = mutableSession.receivingChainKey else {
+            throw E2EEError.missingSessionBootstrapMaterial
+        }
+
+        let receiveStep = DoubleRatchet.deriveChainStep(from: receivingChainKey)
+
+        do {
+            let sealedBox = try AES.GCM.SealedBox(combined: sealedCombined)
+            let plaintextData = try AES.GCM.open(sealedBox, using: receiveStep.messageKey)
+            let plaintext = String(decoding: plaintextData, as: UTF8.self)
+
+            let updatedSession = RatchetSession(
+                id: mutableSession.id,
+                conversationID: mutableSession.conversationID,
+                localUserID: mutableSession.localUserID,
+                remoteUserID: mutableSession.remoteUserID,
+                remoteSigningIdentityKey: mutableSession.remoteSigningIdentityKey,
+                remoteAgreementIdentityKey: mutableSession.remoteAgreementIdentityKey,
+                rootKey: mutableSession.rootKey,
+                sendingChainKey: mutableSession.sendingChainKey,
+                receivingChainKey: receiveStep.nextChainKey,
+                localRatchetPrivateKey: mutableSession.localRatchetPrivateKey,
+                remoteRatchetPublicKey: mutableSession.remoteRatchetPublicKey,
+                sendMessageNumber: mutableSession.sendMessageNumber,
+                receiveMessageNumber: header.messageNumber + 1,
+                previousSendingChainLength: mutableSession.previousSendingChainLength,
+                createdAt: mutableSession.createdAt,
+                updatedAt: Date()
+            )
+
+            try localSessionStore.saveSession(updatedSession)
+
+            return DecryptedEnvelopeMessage(
+                id: envelope.id,
+                senderUserID: envelope.senderUserID,
+                senderSigningIdentityKey: header.senderIdentityKey,
+                senderAgreementIdentityKey: header.senderIdentityAgreementKey,
+                conversationID: envelope.conversationID,
+                plaintext: plaintext,
+                createdAt: envelope.createdAt
+            )
+        } catch {
+            throw E2EEError.decryptionFailed
+        }
+    }
+
         guard let receivingChainKey = mutableSession.receivingChainKey else {
             throw E2EEError.missingSessionBootstrapMaterial
         }
@@ -865,6 +955,85 @@ final class DefaultE2EEEngine: E2EEEngine {
         data.append(Data(String(previousChainLength).utf8))
         data.append(sealedCombined)
         return data
+    }
+    
+    private func symmetricKeyData(_ key: SymmetricKey) -> Data {
+        key.withUnsafeBytes { Data($0) }
+    }
+
+    private func decryptWithSkippedKeyIfAvailable(
+        envelope: CiphertextEnvelope,
+        messageNumber: Int,
+        sealedCombined: Data
+    ) throws -> String? {
+        guard let skipped = try localSkippedKeyStore.takeKey(
+            conversationID: envelope.conversationID,
+            localUserID: envelope.recipientUserID,
+            remoteUserID: envelope.senderUserID,
+            messageNumber: messageNumber
+        ) else {
+            return nil
+        }
+
+        let sealedBox = try AES.GCM.SealedBox(combined: sealedCombined)
+        let plaintextData = try AES.GCM.open(
+            sealedBox,
+            using: SymmetricKey(data: skipped.keyData)
+        )
+        return String(decoding: plaintextData, as: UTF8.self)
+    }
+
+    private func cacheSkippedKeysIfNeeded(
+        sessionState: inout RatchetSession,
+        until incomingMessageNumber: Int
+    ) throws {
+        guard let receivingChainKey = sessionState.receivingChainKey else {
+            throw E2EEError.missingSessionBootstrapMaterial
+        }
+
+        let current = sessionState.receiveMessageNumber
+        guard incomingMessageNumber > current else { return }
+
+        let distance = incomingMessageNumber - current
+        guard distance <= maxSkipWindow else {
+            throw E2EEError.decryptionFailed
+        }
+
+        var chainKey = receivingChainKey
+        var index = current
+
+        while index < incomingMessageNumber {
+            let step = DoubleRatchet.deriveChainStep(from: chainKey)
+            let skipped = SkippedMessageKey(
+                conversationID: sessionState.conversationID,
+                localUserID: sessionState.localUserID,
+                remoteUserID: sessionState.remoteUserID,
+                messageNumber: index,
+                keyData: symmetricKeyData(step.messageKey)
+            )
+            try localSkippedKeyStore.store(skipped)
+            chainKey = step.nextChainKey
+            index += 1
+        }
+
+        sessionState = RatchetSession(
+            id: sessionState.id,
+            conversationID: sessionState.conversationID,
+            localUserID: sessionState.localUserID,
+            remoteUserID: sessionState.remoteUserID,
+            remoteSigningIdentityKey: sessionState.remoteSigningIdentityKey,
+            remoteAgreementIdentityKey: sessionState.remoteAgreementIdentityKey,
+            rootKey: sessionState.rootKey,
+            sendingChainKey: sessionState.sendingChainKey,
+            receivingChainKey: chainKey,
+            localRatchetPrivateKey: sessionState.localRatchetPrivateKey,
+            remoteRatchetPublicKey: sessionState.remoteRatchetPublicKey,
+            sendMessageNumber: sessionState.sendMessageNumber,
+            receiveMessageNumber: incomingMessageNumber,
+            previousSendingChainLength: sessionState.previousSendingChainLength,
+            createdAt: sessionState.createdAt,
+            updatedAt: Date()
+        )
     }
 
     private func deterministicConversationID(localUserID: String, remoteUserID: String) -> UUID {

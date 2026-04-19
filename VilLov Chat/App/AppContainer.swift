@@ -24,6 +24,7 @@ final class AppContainer {
     let identityTrustStore: IdentityTrustStore
     let localKeyStore: LocalKeyStore
     let localSessionStore: LocalSessionStore
+    let localSkippedKeyStore: LocalSkippedKeyStore
 
     init() {
         let providers = AppProviders(
@@ -47,6 +48,7 @@ final class AppContainer {
 
         let localKeyStore = LocalKeyStore()
         let localSessionStore = LocalSessionStore()
+        let localSkippedKeyStore = LocalSkippedKeyStore()
         let identityTrustStore = IdentityTrustStore()
 
         let contactService = ContactService(apiClient: apiClient)
@@ -64,6 +66,7 @@ final class AppContainer {
         let e2eeEngine = DefaultE2EEEngine(
             localKeyStore: localKeyStore,
             localSessionStore: localSessionStore,
+            localSkippedKeyStore: localSkippedKeyStore,
             session: session
         )
 
@@ -94,6 +97,7 @@ final class AppContainer {
         self.identityTrustStore = identityTrustStore
         self.localKeyStore = localKeyStore
         self.localSessionStore = localSessionStore
+        self.localSkippedKeyStore = localSkippedKeyStore
 
         self.environment = AppEnvironment(
             session: session,
