@@ -5,6 +5,7 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
+
 import Foundation
 import Observation
 
@@ -20,15 +21,18 @@ final class ConversationListViewModel {
 
     private let contactService: ContactService
     private let conversationDirectoryService: ConversationDirectoryService
+    private let identityTrustStore: IdentityTrustStore
 
     init(
         contactService: ContactService,
         conversationDirectoryService: ConversationDirectoryService,
-        currentUserID: String
+        currentUserID: String,
+        identityTrustStore: IdentityTrustStore
     ) {
         self.contactService = contactService
         self.conversationDirectoryService = conversationDirectoryService
         self.currentUserID = currentUserID
+        self.identityTrustStore = identityTrustStore
     }
 
     var filteredConversations: [Conversation] {
@@ -61,12 +65,17 @@ final class ConversationListViewModel {
 
                 let contactsByUserID = Dictionary(
                     uniqueKeysWithValues: apiContacts.map {
-                        (
+                        let trustState = identityTrustStore.identity(
+                            for: $0.userID,
+                            currentUserID: currentUserID
+                        )?.trustState ?? .unverified
+
+                        return (
                             $0.userID,
                             Contact(
                                 id: UUID(),
                                 name: $0.displayName,
-                                trustState: .unverified,
+                                trustState: trustState,
                                 userID: $0.userID
                             )
                         )
@@ -80,6 +89,10 @@ final class ConversationListViewModel {
                         : apiConversation.participantAUserID
 
                     let otherContact = contactsByUserID[otherUserID]
+                    let trustState = identityTrustStore.identity(
+                        for: otherUserID,
+                        currentUserID: currentUserID
+                    )?.trustState ?? otherContact?.trustState ?? .unverified
 
                     return Conversation(
                         id: apiConversation.conversationID,
@@ -87,7 +100,7 @@ final class ConversationListViewModel {
                         lastMessagePreview: "",
                         lastActivity: apiConversation.createdAt,
                         unreadCount: 0,
-                        trustState: otherContact?.trustState ?? .unverified,
+                        trustState: trustState,
                         disappearingEnabled: false,
                         recipientUserID: otherUserID
                     )

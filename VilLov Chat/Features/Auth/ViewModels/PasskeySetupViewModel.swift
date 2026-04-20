@@ -25,7 +25,6 @@ final class PasskeySetupViewModel {
     private let userHandle: String?
     private let rememberedAccountName: String?
     private let rememberedAccountsStore: RememberedAccountsStore
-    private let keyDirectoryService: KeyDirectoryService
 
     init(
         mode: Mode,
@@ -33,9 +32,7 @@ final class PasskeySetupViewModel {
         session: AppSession,
         userHandle: String? = nil,
         rememberedAccountName: String? = nil,
-        rememberedAccountsStore: RememberedAccountsStore? = nil,
-        keyDirectoryService: KeyDirectoryService,
-
+        rememberedAccountsStore: RememberedAccountsStore? = nil
     ) {
         self.mode = mode
         self.authService = authService
@@ -43,7 +40,6 @@ final class PasskeySetupViewModel {
         self.userHandle = userHandle
         self.rememberedAccountName = rememberedAccountName
         self.rememberedAccountsStore = rememberedAccountsStore ?? RememberedAccountsStore()
-        self.keyDirectoryService = keyDirectoryService
     }
 
     func performPasskeyFlow() async {
@@ -82,10 +78,6 @@ final class PasskeySetupViewModel {
                     userHandle: finalUserHandle,
                     displayName: finalDisplayName
                 )
-            }
-            
-            if let finalUserHandle {
-                try await keyDirectoryService.uploadDevelopmentKeyBundleIfNeeded(for: finalUserHandle)
             }
 
             session.completeAuthentication(

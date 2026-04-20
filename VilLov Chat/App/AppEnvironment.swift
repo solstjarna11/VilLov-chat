@@ -18,6 +18,8 @@ struct AppEnvironment {
     let conversationDirectoryService: ConversationDirectoryService
     let keyDirectoryService: KeyDirectoryService
     let relayService: RelayService
+    let identityTrustStore: IdentityTrustStore
+    let localKeyStore: LocalKeyStore
 
     init(
         session: AppSession,
@@ -27,7 +29,9 @@ struct AppEnvironment {
         contactService: ContactService,
         conversationDirectoryService: ConversationDirectoryService,
         keyDirectoryService: KeyDirectoryService,
-        relayService: RelayService
+        relayService: RelayService,
+        identityTrustStore: IdentityTrustStore,
+        localKeyStore: LocalKeyStore
     ) {
         self.session = session
         self.providers = providers
@@ -37,5 +41,7 @@ struct AppEnvironment {
         self.conversationDirectoryService = conversationDirectoryService
         self.keyDirectoryService = keyDirectoryService
         self.relayService = relayService
+        self.identityTrustStore = identityTrustStore
+        self.localKeyStore = localKeyStore
     }
 }

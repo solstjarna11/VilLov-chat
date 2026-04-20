@@ -10,12 +10,36 @@
 		23C2A7D72F75AC9F00369CF3 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 23C2A7D62F75AC9F00369CF3 /* .gitignore */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		234430B12F95800900E2223C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2388C0242F73E9EA00661247 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2388C02B2F73E9EA00661247;
+			remoteInfo = "VilLov Chat";
+		};
+		23BEDFD32F956098009B295E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2388C0242F73E9EA00661247 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2388C02B2F73E9EA00661247;
+			remoteInfo = "VilLov Chat";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		234430AD2F95800900E2223C /* VilLovChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VilLovChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2388C02C2F73E9EA00661247 /* VilLov Chat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "VilLov Chat.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		23BEDFCF2F956098009B295E /* VilLov ChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VilLov ChatTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		23C2A7D62F75AC9F00369CF3 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		234430AE2F95800900E2223C /* VilLovChatTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = VilLovChatTests;
+			sourceTree = "<group>";
+		};
 		2388C02E2F73E9EA00661247 /* VilLov Chat */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "VilLov Chat";
@@ -24,7 +48,21 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		234430AA2F95800900E2223C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2388C0292F73E9EA00661247 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23BEDFCC2F956098009B295E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -39,6 +77,7 @@
 			children = (
 				23C2A7D62F75AC9F00369CF3 /* .gitignore */,
 				2388C02E2F73E9EA00661247 /* VilLov Chat */,
+				234430AE2F95800900E2223C /* VilLovChatTests */,
 				2388C02D2F73E9EA00661247 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -47,6 +86,8 @@
 			isa = PBXGroup;
 			children = (
 				2388C02C2F73E9EA00661247 /* VilLov Chat.app */,
+				23BEDFCF2F956098009B295E /* VilLov ChatTests.xctest */,
+				234430AD2F95800900E2223C /* VilLovChatTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -54,6 +95,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		234430AC2F95800900E2223C /* VilLovChatTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 234430B62F95800900E2223C /* Build configuration list for PBXNativeTarget "VilLovChatTests" */;
+			buildPhases = (
+				234430A92F95800900E2223C /* Sources */,
+				234430AA2F95800900E2223C /* Frameworks */,
+				234430AB2F95800900E2223C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				234430B22F95800900E2223C /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				234430AE2F95800900E2223C /* VilLovChatTests */,
+			);
+			name = VilLovChatTests;
+			packageProductDependencies = (
+			);
+			productName = VilLovChatTests;
+			productReference = 234430AD2F95800900E2223C /* VilLovChatTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		2388C02B2F73E9EA00661247 /* VilLov Chat */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2388C0392F73E9EC00661247 /* Build configuration list for PBXNativeTarget "VilLov Chat" */;
@@ -76,6 +140,26 @@
 			productReference = 2388C02C2F73E9EA00661247 /* VilLov Chat.app */;
 			productType = "com.apple.product-type.application";
 		};
+		23BEDFCE2F956098009B295E /* VilLov ChatTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 23BEDFD52F956098009B295E /* Build configuration list for PBXNativeTarget "VilLov ChatTests" */;
+			buildPhases = (
+				23BEDFCB2F956098009B295E /* Sources */,
+				23BEDFCC2F956098009B295E /* Frameworks */,
+				23BEDFCD2F956098009B295E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				23BEDFD42F956098009B295E /* PBXTargetDependency */,
+			);
+			name = "VilLov ChatTests";
+			packageProductDependencies = (
+			);
+			productName = "VilLov ChatTests";
+			productReference = 23BEDFCF2F956098009B295E /* VilLov ChatTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -83,11 +167,19 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2630;
+				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
+					234430AC2F95800900E2223C = {
+						CreatedOnToolsVersion = 26.4.1;
+						TestTargetID = 2388C02B2F73E9EA00661247;
+					};
 					2388C02B2F73E9EA00661247 = {
 						CreatedOnToolsVersion = 26.3;
+					};
+					23BEDFCE2F956098009B295E = {
+						CreatedOnToolsVersion = 26.4.1;
+						TestTargetID = 2388C02B2F73E9EA00661247;
 					};
 				};
 			};
@@ -106,11 +198,20 @@
 			projectRoot = "";
 			targets = (
 				2388C02B2F73E9EA00661247 /* VilLov Chat */,
+				23BEDFCE2F956098009B295E /* VilLov ChatTests */,
+				234430AC2F95800900E2223C /* VilLovChatTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		234430AB2F95800900E2223C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2388C02A2F73E9EA00661247 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -119,10 +220,31 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		23BEDFCD2F956098009B295E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		234430A92F95800900E2223C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2388C0282F73E9EA00661247 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		23BEDFCB2F956098009B295E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -131,7 +253,98 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		234430B22F95800900E2223C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2388C02B2F73E9EA00661247 /* VilLov Chat */;
+			targetProxy = 234430B12F95800900E2223C /* PBXContainerItemProxy */;
+		};
+		23BEDFD42F956098009B295E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2388C02B2F73E9EA00661247 /* VilLov Chat */;
+			targetProxy = 23BEDFD32F956098009B295E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		234430B32F95800900E2223C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R8M3TV7S42;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MACOSX_DEPLOYMENT_TARGET = 26.3;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Lovisa-Sol.VilLovChatTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VilLov Chat.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VilLov Chat";
+				XROS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug;
+		};
+		234430B42F95800900E2223C /* Debug2 */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R8M3TV7S42;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MACOSX_DEPLOYMENT_TARGET = 26.3;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Lovisa-Sol.VilLovChatTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VilLov Chat.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VilLov Chat";
+				XROS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug2;
+		};
+		234430B52F95800900E2223C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R8M3TV7S42;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MACOSX_DEPLOYMENT_TARGET = 26.3;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Lovisa-Sol.VilLovChatTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VilLov Chat.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VilLov Chat";
+				XROS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Release;
+		};
 		2388C0372F73E9EC00661247 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -354,6 +567,81 @@
 			};
 			name = Release;
 		};
+		23BEDFD62F956098009B295E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MACOSX_DEPLOYMENT_TARGET = 26.3;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Lovisa-Sol.VilLov-ChatTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VilLov Chat.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VilLov Chat";
+				XROS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug;
+		};
+		23BEDFD72F956098009B295E /* Debug2 */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MACOSX_DEPLOYMENT_TARGET = 26.3;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Lovisa-Sol.VilLov-ChatTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VilLov Chat.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VilLov Chat";
+				XROS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Debug2;
+		};
+		23BEDFD82F956098009B295E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MACOSX_DEPLOYMENT_TARGET = 26.3;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Lovisa-Sol.VilLov-ChatTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VilLov Chat.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VilLov Chat";
+				XROS_DEPLOYMENT_TARGET = 26.4;
+			};
+			name = Release;
+		};
 		23C2A7CE2F75866E00369CF3 /* Debug2 */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -472,6 +760,16 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		234430B62F95800900E2223C /* Build configuration list for PBXNativeTarget "VilLovChatTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				234430B32F95800900E2223C /* Debug */,
+				234430B42F95800900E2223C /* Debug2 */,
+				234430B52F95800900E2223C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		2388C0272F73E9EA00661247 /* Build configuration list for PBXProject "VilLov Chat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -488,6 +786,16 @@
 				2388C03A2F73E9EC00661247 /* Debug */,
 				23C2A7CF2F75866E00369CF3 /* Debug2 */,
 				2388C03B2F73E9EC00661247 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		23BEDFD52F956098009B295E /* Build configuration list for PBXNativeTarget "VilLov ChatTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				23BEDFD62F956098009B295E /* Debug */,
+				23BEDFD72F956098009B295E /* Debug2 */,
+				23BEDFD82F956098009B295E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

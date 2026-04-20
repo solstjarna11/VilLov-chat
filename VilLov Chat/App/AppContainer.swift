@@ -21,6 +21,10 @@ final class AppContainer {
     let keyDirectoryService: KeyDirectoryService
     let relayService: RelayService
     let conversationService: ConversationService
+    let identityTrustStore: IdentityTrustStore
+    let localKeyStore: LocalKeyStore
+    let localSessionStore: LocalSessionStore
+    let localSkippedKeyStore: LocalSkippedKeyStore
 
     init() {
         let providers = AppProviders(
@@ -36,28 +40,50 @@ final class AppContainer {
             tokenStore: tokenStore
         )
 
+        let session = AppSession(tokenStore: tokenStore)
+
         let authenticator = DevelopmentPasskeyAuthenticator(
             credentialStore: DevPasskeyCredentialStore()
+        )
+
+        let localKeyStore = LocalKeyStore()
+        let localSessionStore = LocalSessionStore()
+        let localSkippedKeyStore = LocalSkippedKeyStore()
+        let identityTrustStore = IdentityTrustStore()
+
+        let contactService = ContactService(apiClient: apiClient)
+        let conversationDirectoryService = ConversationDirectoryService(apiClient: apiClient)
+
+        let keyDirectoryService = KeyDirectoryService(
+            apiClient: apiClient,
+            localKeyStore: localKeyStore,
+            identityTrustStore: identityTrustStore,
+            session: session
+        )
+
+        let relayService = RelayService(apiClient: apiClient)
+
+        let e2eeEngine = DefaultE2EEEngine(
+            localKeyStore: localKeyStore,
+            localSessionStore: localSessionStore,
+            localSkippedKeyStore: localSkippedKeyStore,
+            session: session
+        )
+
+        let conversationService = ConversationService(
+            apiClient: apiClient,
+            keyDirectoryService: keyDirectoryService,
+            relayService: relayService,
+            e2eeEngine: e2eeEngine,
+            session: session
         )
 
         let authService = AuthService(
             apiClient: apiClient,
             tokenStore: tokenStore,
-            authenticator: authenticator
+            authenticator: authenticator,
+            keyDirectoryService: keyDirectoryService
         )
-
-        let contactService = ContactService(apiClient: apiClient)
-        let conversationDirectoryService = ConversationDirectoryService(apiClient: apiClient)
-        let keyDirectoryService = KeyDirectoryService(apiClient: apiClient)
-        let relayService = RelayService(apiClient: apiClient)
-        let conversationService = ConversationService(
-            apiClient: apiClient,
-            keyDirectoryService: keyDirectoryService,
-            relayService: relayService,
-            e2eeEngine: StubE2EEEngine()
-        )
-
-        let session = AppSession(tokenStore: tokenStore)
 
         self.tokenStore = tokenStore
         self.apiClient = apiClient
@@ -68,6 +94,10 @@ final class AppContainer {
         self.relayService = relayService
         self.conversationService = conversationService
         self.session = session
+        self.identityTrustStore = identityTrustStore
+        self.localKeyStore = localKeyStore
+        self.localSessionStore = localSessionStore
+        self.localSkippedKeyStore = localSkippedKeyStore
 
         self.environment = AppEnvironment(
             session: session,
@@ -77,7 +107,9 @@ final class AppContainer {
             contactService: contactService,
             conversationDirectoryService: conversationDirectoryService,
             keyDirectoryService: keyDirectoryService,
-            relayService: relayService
+            relayService: relayService,
+            identityTrustStore: identityTrustStore,
+            localKeyStore: localKeyStore
         )
     }
 }

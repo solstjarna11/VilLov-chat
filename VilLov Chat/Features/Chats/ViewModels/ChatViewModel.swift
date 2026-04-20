@@ -19,10 +19,12 @@ final class ChatViewModel {
 
     let conversation: Conversation
 
-    private let currentUserID: String
+    let currentUserID: String
     private let messageProvider: MessageProviding
     private let conversationService: ConversationServicing?
     private let localMessageStore: LocalMessageStore
+
+    private let failedDecryptPlaceholderText = "Message could not be decrypted."
 
     init(
         conversation: Conversation,
@@ -117,10 +119,19 @@ final class ChatViewModel {
 
         Task {
             do {
-                let inboxMessages = try await conversationService.fetchInbox()
+                let result = try await conversationService.fetchInboxResilient()
 
                 await MainActor.run {
-                    self.mergeInboxMessages(inboxMessages)
+                    self.mergeInboxMessages(result.messages)
+                    self.mergeInboxFailures(result.failures)
+
+                    if !result.failures.isEmpty {
+                        self.errorMessage = """
+                        Refreshed inbox, but \(result.failures.count) \
+                        message(s) could not be decrypted.
+                        """
+                    }
+
                     self.isRefreshingInbox = false
                 }
             } catch {
@@ -149,6 +160,28 @@ final class ChatViewModel {
 
         messages = localMessageStore.mergeIncomingMessages(
             newMessages,
+            for: conversation.id,
+            currentUserID: currentUserID
+        )
+    }
+
+    private func mergeInboxFailures(_ failures: [InboxMessageFailure]) {
+        let matchingFailures = failures.filter { $0.conversationID == conversation.id }
+
+        guard !matchingFailures.isEmpty else { return }
+
+        let placeholderMessages = matchingFailures.map { failure in
+            Message(
+                id: failure.envelopeID,
+                text: failedDecryptPlaceholderText,
+                isIncoming: true,
+                timestamp: failure.createdAt,
+                status: .failed
+            )
+        }
+
+        messages = localMessageStore.mergeIncomingMessages(
+            placeholderMessages,
             for: conversation.id,
             currentUserID: currentUserID
         )

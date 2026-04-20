@@ -5,6 +5,7 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
+
 import SwiftUI
 import Observation
 
@@ -12,8 +13,17 @@ struct ChatScreen: View {
     @State private var viewModel: ChatViewModel
     @FocusState private var isInputFocused: Bool
 
-    init(viewModel: ChatViewModel) {
+    private let identityTrustStore: IdentityTrustStore
+    private let localKeyStore: LocalKeyStore
+
+    init(
+        viewModel: ChatViewModel,
+        identityTrustStore: IdentityTrustStore,
+        localKeyStore: LocalKeyStore
+    ) {
         _viewModel = State(initialValue: viewModel)
+        self.identityTrustStore = identityTrustStore
+        self.localKeyStore = localKeyStore
     }
 
     var body: some View {
@@ -85,7 +95,10 @@ struct ChatScreen: View {
                 NavigationLink {
                     ConversationSecurityScreen(
                         viewModel: ConversationSecurityViewModel(
-                            conversation: viewModel.conversation
+                            conversation: viewModel.conversation,
+                            currentUserID: viewModel.currentUserID,
+                            identityTrustStore: identityTrustStore,
+                            localKeyStore: localKeyStore
                         )
                     )
                 } label: {
@@ -114,7 +127,10 @@ struct ChatScreen: View {
                 NavigationLink {
                     ConversationSecurityScreen(
                         viewModel: ConversationSecurityViewModel(
-                            conversation: viewModel.conversation
+                            conversation: viewModel.conversation,
+                            currentUserID: viewModel.currentUserID,
+                            identityTrustStore: identityTrustStore,
+                            localKeyStore: localKeyStore
                         )
                     )
                 } label: {
@@ -163,7 +179,10 @@ struct ChatScreen: View {
         NavigationLink {
             ConversationSecurityScreen(
                 viewModel: ConversationSecurityViewModel(
-                    conversation: viewModel.conversation
+                    conversation: viewModel.conversation,
+                    currentUserID: viewModel.currentUserID,
+                    identityTrustStore: identityTrustStore,
+                    localKeyStore: localKeyStore
                 )
             )
         } label: {
@@ -186,4 +205,3 @@ struct ChatScreen: View {
         isInputFocused = true
     }
 }
-

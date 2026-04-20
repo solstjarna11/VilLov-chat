@@ -18,22 +18,17 @@ struct StoredConversationMessage: Codable, Equatable, Identifiable {
 
 @MainActor
 final class LocalMessageStore {
-    private let defaults: UserDefaults
-    private let storageKeyPrefix = "conversation_messages_"
+    private let encryptedStore: EncryptedFileStore
 
-    init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    init(encryptedStore: EncryptedFileStore? = nil) {
+        self.encryptedStore = encryptedStore ?? EncryptedFileStore()
     }
 
     func loadMessages(for conversationID: UUID, currentUserID: String) -> [Message] {
-        let key = storageKey(for: conversationID, currentUserID: currentUserID)
-
-        guard let data = defaults.data(forKey: key) else {
-            return []
-        }
+        let relativePath = storagePath(for: conversationID, currentUserID: currentUserID)
 
         do {
-            let stored = try JSONDecoder().decode([StoredConversationMessage].self, from: data)
+            let stored = try encryptedStore.load([StoredConversationMessage].self, from: relativePath) ?? []
             return stored
                 .map {
                     Message(
@@ -63,8 +58,10 @@ final class LocalMessageStore {
         }
 
         do {
-            let data = try JSONEncoder().encode(stored)
-            defaults.set(data, forKey: storageKey(for: conversationID, currentUserID: currentUserID))
+            try encryptedStore.save(
+                stored,
+                to: storagePath(for: conversationID, currentUserID: currentUserID)
+            )
         } catch {
             return
         }
@@ -117,7 +114,7 @@ final class LocalMessageStore {
         return existing
     }
 
-    private func storageKey(for conversationID: UUID, currentUserID: String) -> String {
-        storageKeyPrefix + currentUserID + "_" + conversationID.uuidString
+    private func storagePath(for conversationID: UUID, currentUserID: String) -> String {
+        "messages/\(currentUserID)_\(conversationID.uuidString).json.enc"
     }
 }

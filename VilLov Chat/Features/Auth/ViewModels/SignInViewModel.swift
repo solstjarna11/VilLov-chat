@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 17.4.2026.
 //
 
-
 import Foundation
 import Observation
 
@@ -21,18 +20,15 @@ final class SignInViewModel {
     private let authService: AuthService
     private let session: AppSession
     private let rememberedAccountsStore: RememberedAccountsStore
-    private let keyDirectoryService: KeyDirectoryService
 
     init(
         authService: AuthService,
         session: AppSession,
-        rememberedAccountsStore: RememberedAccountsStore? = nil,
-        keyDirectoryService: KeyDirectoryService
+        rememberedAccountsStore: RememberedAccountsStore? = nil
     ) {
         self.authService = authService
         self.session = session
         self.rememberedAccountsStore = rememberedAccountsStore ?? RememberedAccountsStore()
-        self.keyDirectoryService = keyDirectoryService
 
         self.rememberedAccounts = self.rememberedAccountsStore.loadAccounts()
         self.selectedAccount = self.rememberedAccounts.first
@@ -90,8 +86,6 @@ final class SignInViewModel {
                         userHandle: finalUserID,
                         displayName: finalDisplayName
                     )
-
-                    try await keyDirectoryService.uploadDevelopmentKeyBundleIfNeeded(for: finalUserID)
                 }
 
                 await MainActor.run {

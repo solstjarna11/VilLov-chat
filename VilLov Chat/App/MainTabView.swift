@@ -5,6 +5,7 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
+
 import SwiftUI
 
 struct MainTabView: View {
@@ -17,11 +18,14 @@ struct MainTabView: View {
                 viewModel: ConversationListViewModel(
                     contactService: environment.contactService,
                     conversationDirectoryService: environment.conversationDirectoryService,
-                    currentUserID: currentUserID
+                    currentUserID: currentUserID,
+                    identityTrustStore: environment.identityTrustStore
                 ),
                 messageProvider: environment.providers.messages,
                 contactService: environment.contactService,
-                conversationService: environment.conversationService
+                conversationService: environment.conversationService,
+                identityTrustStore: environment.identityTrustStore,
+                localKeyStore: environment.localKeyStore
             )
             .tabItem {
                 Label("Chats", systemImage: "message")

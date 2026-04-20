@@ -5,6 +5,7 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
+
 import SwiftUI
 import Observation
 
@@ -24,9 +25,9 @@ struct ConversationSecurityScreen: View {
                     ContactVerificationScreen(
                         viewModel: ContactVerificationViewModel(
                             conversation: viewModel.conversation,
-                            verificationData: viewModel.conversation.isVerified
-                                ? MockContactVerificationData.verified
-                                : MockContactVerificationData.unverified
+                            currentUserID: viewModel.currentUserID,
+                            identityTrustStore: viewModel.trustStore,
+                            localKeyStore: viewModel.keyStore
                         )
                     )
                 } label: {
@@ -53,13 +54,13 @@ struct ConversationSecurityScreen: View {
 
             Section("Session") {
                 Button("Refresh Session") {
-                    // hook into real session reset / renegotiation later
                 }
 
                 Button("View Safety Details") {
-                    // optional future route for deeper crypto/session details
                 }
             }
+        }.onAppear {
+            viewModel.reload()
         }
         .navigationTitle("Conversation Security")
         #if os(iOS)
@@ -67,4 +68,3 @@ struct ConversationSecurityScreen: View {
         #endif
     }
 }
-

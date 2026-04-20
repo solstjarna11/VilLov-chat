@@ -30,15 +30,18 @@ final class AuthService {
     private let apiClient: APIClient
     private let tokenStore: AuthTokenStore
     private let authenticator: PasskeyAuthenticating
+    private let keyDirectoryService: KeyDirectoryService
 
     init(
         apiClient: APIClient,
         tokenStore: AuthTokenStore,
-        authenticator: PasskeyAuthenticating
+        authenticator: PasskeyAuthenticating,
+        keyDirectoryService: KeyDirectoryService
     ) {
         self.apiClient = apiClient
         self.tokenStore = tokenStore
         self.authenticator = authenticator
+        self.keyDirectoryService = keyDirectoryService
     }
 
     func registerWithPasskey(
@@ -75,6 +78,14 @@ final class AuthService {
         )
 
         tokenStore.setSessionToken(token)
+
+        do {
+            try await keyDirectoryService.ensureInitialKeyBundle(for: userHandle)
+        } catch {
+            tokenStore.clear()
+            throw error
+        }
+
         return userHandle
     }
 
@@ -111,7 +122,19 @@ final class AuthService {
         )
 
         tokenStore.setSessionToken(token)
-        return finish.userHandle
+
+        let resolvedUserHandle = finish.userHandle ?? userHandle
+
+        if let resolvedUserHandle {
+            do {
+                try await keyDirectoryService.ensureInitialKeyBundle(for: resolvedUserHandle)
+            } catch {
+                tokenStore.clear()
+                throw error
+            }
+        }
+
+        return resolvedUserHandle
     }
 
     func signOut() {
