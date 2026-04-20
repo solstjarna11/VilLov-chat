@@ -81,11 +81,13 @@ final class AuthService {
 
         do {
             try await keyDirectoryService.ensureInitialKeyBundle(for: userHandle)
+            try await keyDirectoryService.rotateSignedPrekeyIfNeeded(for: userHandle)
+            
         } catch {
             tokenStore.clear()
             throw error
         }
-
+        
         return userHandle
     }
 
@@ -128,6 +130,7 @@ final class AuthService {
         if let resolvedUserHandle {
             do {
                 try await keyDirectoryService.ensureInitialKeyBundle(for: resolvedUserHandle)
+                try await keyDirectoryService.rotateSignedPrekeyIfNeeded(for: resolvedUserHandle)
             } catch {
                 tokenStore.clear()
                 throw error

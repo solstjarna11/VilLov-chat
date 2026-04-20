@@ -16,6 +16,7 @@ private struct E2EEHeader: Codable {
     let ephemeralPublicKey: String?
     let ratchetPublicKey: String?
     let signature: String
+    let signedPrekeyId: String?
     let oneTimePrekeyId: String?
     let handshakeMode: HandshakeMode?
     let messageNumber: Int
@@ -41,6 +42,7 @@ enum E2EEError: LocalizedError {
     case missingConversationPeer
     case missingSessionBootstrapMaterial
     case missingLocalRatchetKey
+    case missingRequiredLocalSignedPrekey
 
     var errorDescription: String? {
         switch self {
@@ -80,6 +82,8 @@ enum E2EEError: LocalizedError {
             return "Session bootstrap material is missing."
         case .missingLocalRatchetKey:
             return "Local ratchet key is missing."
+        case .missingRequiredLocalSignedPrekey:
+            return "The message requires a local signed prekey that is no longer available."
         }
     }
 }
@@ -250,6 +254,8 @@ final class DefaultE2EEEngine: E2EEEngine {
         let handshakeMode: HandshakeMode
         let oneTimePrekeyId: String?
         let initialRootKey: Data
+        
+        let recipientSignedPrekeyID = recipientBundle.signedPrekeyId
 
         if
             let recipientOneTimePrekey = recipientBundle.oneTimePrekey,
@@ -325,6 +331,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             sessionState: &sessionState,
             bootstrapEphemeralPublicKeyData: ephemeralPublicKeyData,
             bootstrapHandshakeMode: handshakeMode,
+            bootstrapSignedPrekeyId: recipientSignedPrekeyID,
             bootstrapOneTimePrekeyId: oneTimePrekeyId,
             ratchetPublicKeyData: initialRatchetPublicKeyData
         )
@@ -361,6 +368,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             sessionState: &mutableSession,
             bootstrapEphemeralPublicKeyData: nil,
             bootstrapHandshakeMode: nil,
+            bootstrapSignedPrekeyId: nil,
             bootstrapOneTimePrekeyId: nil,
             ratchetPublicKeyData: ratchetPublicKeyData
         )
@@ -379,6 +387,7 @@ final class DefaultE2EEEngine: E2EEEngine {
         sessionState: inout RatchetSession,
         bootstrapEphemeralPublicKeyData: Data?,
         bootstrapHandshakeMode: HandshakeMode?,
+        bootstrapSignedPrekeyId: String?,
         bootstrapOneTimePrekeyId: String?,
         ratchetPublicKeyData: Data?
     ) throws -> (ciphertext: String, header: String) {
@@ -404,6 +413,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             senderIdentityAgreementKeyData: senderAgreementPublicKeyData,
             ephemeralPublicKeyData: bootstrapEphemeralPublicKeyData ?? Data(),
             ratchetPublicKeyData: ratchetPublicKeyData ?? Data(),
+            signedPrekeyId: bootstrapSignedPrekeyId,
             oneTimePrekeyId: bootstrapOneTimePrekeyId,
             handshakeMode: bootstrapHandshakeMode,
             messageNumber: messageNumber,
@@ -420,6 +430,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             ephemeralPublicKey: bootstrapEphemeralPublicKeyData?.base64EncodedString(),
             ratchetPublicKey: ratchetPublicKeyData?.base64EncodedString(),
             signature: signature.base64EncodedString(),
+            signedPrekeyId: bootstrapSignedPrekeyId,
             oneTimePrekeyId: bootstrapOneTimePrekeyId,
             handshakeMode: bootstrapHandshakeMode,
             messageNumber: messageNumber,
@@ -490,6 +501,17 @@ final class DefaultE2EEEngine: E2EEEngine {
         guard let signatureData = Data(base64Encoded: header.signature) else {
             throw E2EEError.invalidSignature
         }
+        
+        guard let signedPrekeyId = header.signedPrekeyId else {
+            throw E2EEError.invalidHeader
+        }
+
+        guard let localSignedPrekey = try localKeyStore.signedPrekeyPrivateKey(
+            for: recipientUserID,
+            id: signedPrekeyId
+        ) else {
+            throw E2EEError.missingRequiredLocalSignedPrekey
+        }
 
         let initialRootKey: Data
         let consumedOneTimePrekeyId: String?
@@ -507,9 +529,9 @@ final class DefaultE2EEEngine: E2EEEngine {
                 throw E2EEError.missingRequiredLocalOneTimePrekey
             }
 
-            let dh1 = try recipientMaterial.signedPrekeyPrivateKey.sharedSecretFromKeyAgreement(with: senderAgreementPublicKey)
+            let dh1 = try localSignedPrekey.sharedSecretFromKeyAgreement(with: senderAgreementPublicKey)
             let dh2 = try recipientMaterial.identityAgreementPrivateKey.sharedSecretFromKeyAgreement(with: ephemeralPublicKey)
-            let dh3 = try recipientMaterial.signedPrekeyPrivateKey.sharedSecretFromKeyAgreement(with: ephemeralPublicKey)
+            let dh3 = try localSignedPrekey.sharedSecretFromKeyAgreement(with: ephemeralPublicKey)
             let dh4 = try localOPK.sharedSecretFromKeyAgreement(with: ephemeralPublicKey)
 
             initialRootKey = deriveInitialRootKey(
@@ -524,8 +546,8 @@ final class DefaultE2EEEngine: E2EEEngine {
             consumedOneTimePrekeyId = oneTimePrekeyId
 
         case .fallback:
-            let dh1 = try recipientMaterial.signedPrekeyPrivateKey.sharedSecretFromKeyAgreement(with: ephemeralPublicKey)
-
+            let dh1 = try localSignedPrekey.sharedSecretFromKeyAgreement(with: ephemeralPublicKey)
+            
             initialRootKey = deriveInitialRootKey(
                 dhParts: [dh1],
                 conversationID: envelope.conversationID,
@@ -553,6 +575,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             senderIdentityAgreementKeyData: senderIdentityAgreementKeyData,
             ephemeralPublicKeyData: ephemeralPublicKeyData,
             ratchetPublicKeyData: initialRemoteRatchetPublicKey?.rawRepresentation ?? Data(),
+            signedPrekeyId: header.signedPrekeyId,
             oneTimePrekeyId: header.oneTimePrekeyId,
             handshakeMode: header.handshakeMode,
             messageNumber: header.messageNumber,
@@ -695,6 +718,7 @@ final class DefaultE2EEEngine: E2EEEngine {
             senderIdentityAgreementKeyData: senderIdentityAgreementKeyData,
             ephemeralPublicKeyData: ephemeralData,
             ratchetPublicKeyData: ratchetData,
+            signedPrekeyId: header.signedPrekeyId,
             oneTimePrekeyId: nil,
             handshakeMode: nil,
             messageNumber: header.messageNumber,
@@ -795,7 +819,12 @@ final class DefaultE2EEEngine: E2EEEngine {
             rawRepresentation: signingIdentityKeyData
         )
 
-        guard signingIdentityPublicKey.isValidSignature(signatureData, for: signedPrekeyData) else {
+        let signaturePayload = localKeyStore.signedPrekeySignaturePayload(
+            signedPrekeyID: bundle.signedPrekeyId,
+            signedPrekeyPublicKey: signedPrekeyData
+        )
+
+        guard signingIdentityPublicKey.isValidSignature(signatureData, for: signaturePayload) else {
             throw E2EEError.invalidRecipientSignedPrekeySignature
         }
     }
@@ -840,7 +869,7 @@ final class DefaultE2EEEngine: E2EEEngine {
     }
 
     private var protocolSalt: Data {
-        Data("VilLovChat-E2EE-v4".utf8)
+        Data("VilLovChat-E2EE-v5".utf8)
     }
 
     private func sharedInfo(
@@ -851,7 +880,7 @@ final class DefaultE2EEEngine: E2EEEngine {
         senderAgreementIdentityKeyData: Data
     ) -> Data {
         var data = Data()
-        data.append(Data("VilLovChat-X3DH-Root-v4".utf8))
+        data.append(Data("VilLovChat-X3DH-Root-v5".utf8))
         data.append(Data(conversationID.uuidString.utf8))
         data.append(Data(senderUserID.utf8))
         data.append(Data(recipientUserID.utf8))
@@ -868,6 +897,7 @@ final class DefaultE2EEEngine: E2EEEngine {
         senderIdentityAgreementKeyData: Data,
         ephemeralPublicKeyData: Data,
         ratchetPublicKeyData: Data,
+        signedPrekeyId: String?,
         oneTimePrekeyId: String?,
         handshakeMode: HandshakeMode?,
         messageNumber: Int,
@@ -875,7 +905,7 @@ final class DefaultE2EEEngine: E2EEEngine {
         sealedCombined: Data
     ) -> Data {
         var data = Data()
-        data.append(Data("VilLovChat-E2EE-sign-v4".utf8))
+        data.append(Data("VilLovChat-E2EE-sign-v5".utf8))
         data.append(Data(String(version).utf8))
         data.append(Data(conversationID.uuidString.utf8))
         data.append(Data(senderUserID.utf8))
@@ -883,6 +913,7 @@ final class DefaultE2EEEngine: E2EEEngine {
         data.append(senderIdentityAgreementKeyData)
         data.append(ephemeralPublicKeyData)
         data.append(ratchetPublicKeyData)
+        data.append(Data((signedPrekeyId ?? "").utf8))
         data.append(Data((oneTimePrekeyId ?? "").utf8))
         data.append(Data((handshakeMode?.rawValue ?? "").utf8))
         data.append(Data(String(messageNumber).utf8))

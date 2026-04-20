@@ -182,6 +182,8 @@ final class ConversationService: ConversationServicing {
                 return "Ratchet public key is invalid."
             case .missingLocalRatchetKey:
                 return "Local ratchet key is missing."
+            case .missingRequiredLocalSignedPrekey:
+                return "The message requires a local signed prekey that is no longer available."
             }
         }
 

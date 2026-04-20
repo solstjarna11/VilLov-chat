@@ -16,6 +16,7 @@ struct RecipientKeyBundle: Codable, Equatable {
     let userID: String
     let identityKey: String              // signing identity public key
     let identityAgreementKey: String     // agreement identity public key
+    let signedPrekeyId: String
     let signedPrekey: String
     let signedPrekeySignature: String
     let oneTimePrekey: String?
@@ -26,6 +27,7 @@ struct UploadKeyBundleRequest: Codable, Equatable {
     let userID: String
     let identityKey: String              // signing identity public key
     let identityAgreementKey: String     // agreement identity public key
+    let signedPrekeyId: String
     let signedPrekey: String
     let signedPrekeySignature: String
     let oneTimePrekeys: [OneTimePrekeyUpload]
