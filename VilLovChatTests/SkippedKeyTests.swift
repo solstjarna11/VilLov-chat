@@ -1,3 +1,11 @@
+//
+//  SkippedKeyTests.swift
+//  VilLov Chat
+//
+//  Created by Lovísa Sól on 19.4.2026.
+//
+
+
 import Foundation
 import Testing
 

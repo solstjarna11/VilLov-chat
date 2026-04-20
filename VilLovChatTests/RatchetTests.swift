@@ -1,3 +1,11 @@
+//
+//  RatchetTests.swift
+//  VilLov Chat
+//
+//  Created by Lovísa Sól on 19.4.2026.
+//
+
+
 import Foundation
 import Testing
 
@@ -32,6 +40,9 @@ struct RatchetTests {
         let bob = TestClient.make(userID: "bob-\(UUID().uuidString)")
         let conversationID = TestConversationIDs.deterministic(alice.userID, bob.userID)
 
+        let bootstrap = try await alice.send("bootstrap", to: bob, conversationID: conversationID)
+        #expect(try await bob.receive(bootstrap) == "bootstrap")
+
         let m1 = try await alice.send("1", to: bob, conversationID: conversationID)
         let m2 = try await alice.send("2", to: bob, conversationID: conversationID)
         let m3 = try await alice.send("3", to: bob, conversationID: conversationID)
@@ -43,10 +54,13 @@ struct RatchetTests {
 
     @Test
     @MainActor
-    func out_of_order_delivery_uses_skipped_keys() async throws {
+    func out_of_order_delivery_after_bootstrap_uses_skipped_keys() async throws {
         let alice = TestClient.make(userID: "alice-\(UUID().uuidString)")
         let bob = TestClient.make(userID: "bob-\(UUID().uuidString)")
         let conversationID = TestConversationIDs.deterministic(alice.userID, bob.userID)
+
+        let bootstrap = try await alice.send("bootstrap", to: bob, conversationID: conversationID)
+        #expect(try await bob.receive(bootstrap) == "bootstrap")
 
         let m1 = try await alice.send("first", to: bob, conversationID: conversationID)
         let m2 = try await alice.send("second", to: bob, conversationID: conversationID)

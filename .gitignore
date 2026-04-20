@@ -1,8 +1,7 @@
 # Xcode User Data & Build Files
 
 xcuserdata/
-status/
-/*.txt
+*.txt
 .build/
 .swiftpm/
 *.dSYM
