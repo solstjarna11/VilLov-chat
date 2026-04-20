@@ -124,4 +124,29 @@ final class KeyDirectoryService {
             currentUserID: currentUserID
         )
     }
+    
+    func rotateSignedPrekeyIfNeeded(
+        for userID: String,
+        maxAge: TimeInterval = 14 * 24 * 60 * 60,
+        retiredKeyRetention: TimeInterval = 30 * 24 * 60 * 60
+    ) async throws {
+        let current = try localKeyStore.currentSignedPrekey(for: userID)
+
+        guard Date().timeIntervalSince(current.createdAt) >= maxAge else {
+            return
+        }
+
+        _ = try localKeyStore.rotateSignedPrekey(for: userID)
+
+        let request = try localKeyStore.uploadBundleRequest(
+            for: userID,
+            oneTimePrekeyCount: 0
+        )
+        try await uploadOwnKeyBundle(request)
+
+        try localKeyStore.purgeRetiredSignedPrekeys(
+            for: userID,
+            olderThan: Date().addingTimeInterval(-retiredKeyRetention)
+        )
+    }
 }

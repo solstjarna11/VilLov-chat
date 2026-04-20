@@ -10,12 +10,35 @@ import Foundation
 import CryptoKit
 import Security
 
+struct SignedPrekeyMaterial: Codable, Equatable {
+    let id: String
+    let createdAt: Date
+    let privateKeyRaw: Data
+
+    var privateKey: Curve25519.KeyAgreement.PrivateKey {
+        get throws {
+            try Curve25519.KeyAgreement.PrivateKey(rawRepresentation: privateKeyRaw)
+        }
+    }
+
+    var publicKey: Curve25519.KeyAgreement.PublicKey {
+        get throws { try privateKey.publicKey }
+    }
+
+    var publicKeyData: Data {
+        get throws { try publicKey.rawRepresentation }
+    }
+
+    var publicKeyBase64: String {
+        get throws { try publicKeyData.base64EncodedString() }
+    }
+}
+
 struct LocalIdentityMaterial {
     let identitySigningPrivateKey: Curve25519.Signing.PrivateKey
     let identityAgreementPrivateKey: Curve25519.KeyAgreement.PrivateKey
-    let signedPrekeyPrivateKey: Curve25519.KeyAgreement.PrivateKey
+    let currentSignedPrekey: SignedPrekeyMaterial
 }
-
 
 struct OneTimePrekeyMaterial {
     let id: String
@@ -39,6 +62,7 @@ enum LocalKeyStoreError: Error {
     case keychainStoreFailed(OSStatus)
     case keychainLoadFailed(OSStatus)
     case duplicateOneTimePrekeyID
+    case missingCurrentSignedPrekey
 }
 
 final class LocalKeyStore {
@@ -47,11 +71,9 @@ final class LocalKeyStore {
     func ensureLocalIdentityMaterial(for userID: String) throws -> LocalIdentityMaterial {
         let signingTag = identitySigningPrivateKeyTag(for: userID)
         let agreementTag = identityAgreementPrivateKeyTag(for: userID)
-        let signedPrekeyTag = signedPrekeyPrivateKeyTag(for: userID)
 
         let signingPrivateKey: Curve25519.Signing.PrivateKey
         let agreementPrivateKey: Curve25519.KeyAgreement.PrivateKey
-        let signedPrekeyPrivateKey: Curve25519.KeyAgreement.PrivateKey
 
         if let signingData = try loadKey(tag: signingTag) {
             signingPrivateKey = try Curve25519.Signing.PrivateKey(rawRepresentation: signingData)
@@ -69,19 +91,58 @@ final class LocalKeyStore {
             agreementPrivateKey = newKey
         }
 
-        if let prekeyData = try loadKey(tag: signedPrekeyTag) {
-            signedPrekeyPrivateKey = try Curve25519.KeyAgreement.PrivateKey(rawRepresentation: prekeyData)
-        } else {
-            let newKey = Curve25519.KeyAgreement.PrivateKey()
-            try saveKey(newKey.rawRepresentation, tag: signedPrekeyTag)
-            signedPrekeyPrivateKey = newKey
-        }
+        let currentSignedPrekey = try ensureCurrentSignedPrekey(for: userID)
 
         return LocalIdentityMaterial(
             identitySigningPrivateKey: signingPrivateKey,
             identityAgreementPrivateKey: agreementPrivateKey,
-            signedPrekeyPrivateKey: signedPrekeyPrivateKey
+            currentSignedPrekey: currentSignedPrekey
         )
+    }
+
+    func currentSignedPrekey(for userID: String) throws -> SignedPrekeyMaterial {
+        try ensureCurrentSignedPrekey(for: userID)
+    }
+
+    @discardableResult
+    func rotateSignedPrekey(for userID: String) throws -> SignedPrekeyMaterial {
+        let newSignedPrekey = SignedPrekeyMaterial(
+            id: UUID().uuidString.lowercased(),
+            createdAt: Date(),
+            privateKeyRaw: Curve25519.KeyAgreement.PrivateKey().rawRepresentation
+        )
+
+        try saveSignedPrekey(newSignedPrekey, for: userID)
+        try saveCurrentSignedPrekeyID(newSignedPrekey.id, for: userID)
+        return newSignedPrekey
+    }
+
+    func signedPrekeyPrivateKey(
+        for userID: String,
+        id: String
+    ) throws -> Curve25519.KeyAgreement.PrivateKey? {
+        guard let record = try loadSignedPrekey(for: userID, id: id) else {
+            return nil
+        }
+        return try Curve25519.KeyAgreement.PrivateKey(rawRepresentation: record.privateKeyRaw)
+    }
+
+    func purgeRetiredSignedPrekeys(
+        for userID: String,
+        olderThan cutoff: Date
+    ) throws {
+        guard let currentID = try loadCurrentSignedPrekeyID(for: userID) else {
+            return
+        }
+
+        let ids = try listSignedPrekeyIDs(for: userID)
+
+        for id in ids where id != currentID {
+            guard let record = try loadSignedPrekey(for: userID, id: id) else { continue }
+            if record.createdAt < cutoff {
+                try deleteKey(tag: signedPrekeyPrivateKeyTag(for: userID, id: id))
+            }
+        }
     }
 
     func generateOneTimePrekeys(
@@ -124,14 +185,20 @@ final class LocalKeyStore {
 
         let signingPublicKey = material.identitySigningPrivateKey.publicKey.rawRepresentation
         let agreementPublicKey = material.identityAgreementPrivateKey.publicKey.rawRepresentation
-        let signedPrekeyPublicKey = material.signedPrekeyPrivateKey.publicKey.rawRepresentation
+        let signedPrekeyPublicKey = try material.currentSignedPrekey.publicKeyData
 
-        let signature = try material.identitySigningPrivateKey.signature(for: signedPrekeyPublicKey)
+        let signaturePayload = signedPrekeySignaturePayload(
+            signedPrekeyID: material.currentSignedPrekey.id,
+            signedPrekeyPublicKey: signedPrekeyPublicKey
+        )
+
+        let signature = try material.identitySigningPrivateKey.signature(for: signaturePayload)
 
         return UploadKeyBundleRequest(
             userID: userID,
             identityKey: signingPublicKey.base64EncodedString(),
             identityAgreementKey: agreementPublicKey.base64EncodedString(),
+            signedPrekeyId: material.currentSignedPrekey.id,
             signedPrekey: signedPrekeyPublicKey.base64EncodedString(),
             signedPrekeySignature: signature.base64EncodedString(),
             oneTimePrekeys: oneTimePrekeys.map {
@@ -149,9 +216,10 @@ final class LocalKeyStore {
     }
 
     func signedPrekeyPrivateKey(for userID: String) throws -> Curve25519.KeyAgreement.PrivateKey {
-        try ensureLocalIdentityMaterial(for: userID).signedPrekeyPrivateKey
+        let signedPrekey = try ensureLocalIdentityMaterial(for: userID).currentSignedPrekey
+        return try Curve25519.KeyAgreement.PrivateKey(rawRepresentation: signedPrekey.privateKeyRaw)
     }
-
+    
     func oneTimePrekeyPrivateKey(
         for userID: String,
         id: String
@@ -186,6 +254,101 @@ final class LocalKeyStore {
             .base64EncodedString()
     }
 
+    func signedPrekeySignaturePayload(
+        signedPrekeyID: String,
+        signedPrekeyPublicKey: Data
+    ) -> Data {
+        var data = Data()
+        data.append(Data("VilLovChat-SignedPrekey-v1".utf8))
+        data.append(Data(signedPrekeyID.utf8))
+        data.append(Data([0x00]))
+        data.append(signedPrekeyPublicKey)
+        return data
+    }
+
+    private func ensureCurrentSignedPrekey(for userID: String) throws -> SignedPrekeyMaterial {
+        if let currentID = try loadCurrentSignedPrekeyID(for: userID),
+           let existing = try loadSignedPrekey(for: userID, id: currentID) {
+            return existing
+        }
+
+        let initial = SignedPrekeyMaterial(
+            id: UUID().uuidString.lowercased(),
+            createdAt: Date(),
+            privateKeyRaw: Curve25519.KeyAgreement.PrivateKey().rawRepresentation
+        )
+
+        try saveSignedPrekey(initial, for: userID)
+        try saveCurrentSignedPrekeyID(initial.id, for: userID)
+        return initial
+    }
+
+    private func saveSignedPrekey(
+        _ signedPrekey: SignedPrekeyMaterial,
+        for userID: String
+    ) throws {
+        let data = try JSONEncoder().encode(signedPrekey)
+        try saveKey(data, tag: signedPrekeyPrivateKeyTag(for: userID, id: signedPrekey.id))
+    }
+
+    private func loadSignedPrekey(
+        for userID: String,
+        id: String
+    ) throws -> SignedPrekeyMaterial? {
+        let tag = signedPrekeyPrivateKeyTag(for: userID, id: id)
+        guard let data = try loadKey(tag: tag) else {
+            return nil
+        }
+        return try JSONDecoder().decode(SignedPrekeyMaterial.self, from: data)
+    }
+
+    private func saveCurrentSignedPrekeyID(
+        _ id: String,
+        for userID: String
+    ) throws {
+        try saveKey(Data(id.utf8), tag: signedPrekeyCurrentTag(for: userID))
+    }
+
+    private func loadCurrentSignedPrekeyID(for userID: String) throws -> String? {
+        guard let data = try loadKey(tag: signedPrekeyCurrentTag(for: userID)) else {
+            return nil
+        }
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    private func listSignedPrekeyIDs(for userID: String) throws -> [String] {
+        let prefix = "\(service).signed-prekey.\(userID)."
+
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecReturnAttributes as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll
+        ]
+
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        switch status {
+        case errSecSuccess:
+            guard let items = result as? [[String: Any]] else {
+                throw LocalKeyStoreError.invalidStoredKeyMaterial
+            }
+
+            return items.compactMap { item in
+                guard let account = item[kSecAttrAccount as String] as? String else { return nil }
+                guard account.hasPrefix(prefix) else { return nil }
+                return String(account.dropFirst(prefix.count))
+            }
+
+        case errSecItemNotFound:
+            return []
+
+        default:
+            throw LocalKeyStoreError.keychainLoadFailed(status)
+        }
+    }
+
     private func identitySigningPrivateKeyTag(for userID: String) -> String {
         "\(service).identity-signing.\(userID)"
     }
@@ -194,8 +357,12 @@ final class LocalKeyStore {
         "\(service).identity-agreement.\(userID)"
     }
 
-    private func signedPrekeyPrivateKeyTag(for userID: String) -> String {
-        "\(service).signed-prekey.\(userID)"
+    private func signedPrekeyCurrentTag(for userID: String) -> String {
+        "\(service).signed-prekey.current.\(userID)"
+    }
+
+    private func signedPrekeyPrivateKeyTag(for userID: String, id: String) -> String {
+        "\(service).signed-prekey.\(userID).\(id)"
     }
 
     private func oneTimePrekeyPrivateKeyTag(for userID: String, id: String) -> String {

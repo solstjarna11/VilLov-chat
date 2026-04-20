@@ -96,6 +96,7 @@ final class TestClient {
             userID: upload.userID,
             identityKey: upload.identityKey,
             identityAgreementKey: upload.identityAgreementKey,
+            signedPrekeyId: upload.signedPrekeyId,
             signedPrekey: upload.signedPrekey,
             signedPrekeySignature: upload.signedPrekeySignature,
             oneTimePrekey: oneTime?.publicKey,
@@ -151,7 +152,7 @@ final class TestClient {
     func reload(
         encryptedStoreFactory: (() -> EncryptedFileStore)? = nil
     ) -> TestClient {
-        // Reuse same key/session/skipped stores if you want true persistence simulation.
+        // Reuse same key/session/skipped stores if we want true persistence simulation.
         // Since LocalKeyStore is Keychain-backed and session/skipped stores are injected,
         // this method reconstructs only the engine/session wrapper.
 
@@ -160,6 +161,84 @@ final class TestClient {
             localKeyStore: localKeyStore,
             localSessionStore: localSessionStore,
             localSkippedKeyStore: localSkippedKeyStore
+        )
+    }
+    
+    func rotateSignedPrekey() throws {
+        _ = try localKeyStore.rotateSignedPrekey(for: userID)
+    }
+
+    func purgeRetiredSignedPrekeys(olderThan cutoff: Date) throws {
+        try localKeyStore.purgeRetiredSignedPrekeys(for: userID, olderThan: cutoff)
+    }
+
+    func tamperedRecipientBundleChangingSignedPrekeyId(
+        oneTimePrekeyCount: Int = 20
+    ) throws -> RecipientKeyBundle {
+        let bundle = try recipientBundle(oneTimePrekeyCount: oneTimePrekeyCount)
+
+        return RecipientKeyBundle(
+            userID: bundle.userID,
+            identityKey: bundle.identityKey,
+            identityAgreementKey: bundle.identityAgreementKey,
+            signedPrekeyId: UUID().uuidString.lowercased(), // tampered, signature unchanged
+            signedPrekey: bundle.signedPrekey,
+            signedPrekeySignature: bundle.signedPrekeySignature,
+            oneTimePrekey: bundle.oneTimePrekey,
+            oneTimePrekeyId: bundle.oneTimePrekeyId
+        )
+    }
+
+    func tamperedRecipientBundleChangingSignedPrekey(
+        oneTimePrekeyCount: Int = 20
+    ) throws -> RecipientKeyBundle {
+        let bundle = try recipientBundle(oneTimePrekeyCount: oneTimePrekeyCount)
+
+        guard let signedPrekeyData = Data(base64Encoded: bundle.signedPrekey), !signedPrekeyData.isEmpty else {
+            return bundle
+        }
+
+        var tampered = signedPrekeyData
+        tampered[tampered.startIndex] ^= 0x01
+
+        return RecipientKeyBundle(
+            userID: bundle.userID,
+            identityKey: bundle.identityKey,
+            identityAgreementKey: bundle.identityAgreementKey,
+            signedPrekeyId: bundle.signedPrekeyId,
+            signedPrekey: tampered.base64EncodedString(),
+            signedPrekeySignature: bundle.signedPrekeySignature,
+            oneTimePrekey: bundle.oneTimePrekey,
+            oneTimePrekeyId: bundle.oneTimePrekeyId
+        )
+    }
+
+    func send(
+        _ plaintext: String,
+        to recipient: TestClient,
+        using recipientBundle: RecipientKeyBundle,
+        conversationID: UUID
+    ) async throws -> EncryptedTestMessage {
+        let encrypted = try await e2eeEngine.encrypt(
+            plaintext: plaintext,
+            recipientBundle: recipientBundle,
+            conversationID: conversationID
+        )
+
+        let envelope = CiphertextEnvelope(
+            id: UUID(),
+            senderUserID: userID,
+            recipientUserID: recipient.userID,
+            conversationID: conversationID,
+            ciphertext: encrypted.ciphertext,
+            header: encrypted.header,
+            createdAt: Date()
+        )
+
+        return EncryptedTestMessage(
+            ciphertext: encrypted.ciphertext,
+            header: encrypted.header,
+            envelope: envelope
         )
     }
 }
