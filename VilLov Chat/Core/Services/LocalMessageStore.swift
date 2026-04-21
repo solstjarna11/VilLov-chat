@@ -14,6 +14,7 @@ struct StoredConversationMessage: Codable, Equatable, Identifiable {
     let isIncoming: Bool
     let timestamp: Date
     let status: MessageStatus
+    let visibility: MessageVisibility
 }
 
 @MainActor
@@ -25,24 +26,8 @@ final class LocalMessageStore {
     }
 
     func loadMessages(for conversationID: UUID, currentUserID: String) -> [Message] {
-        let relativePath = storagePath(for: conversationID, currentUserID: currentUserID)
-
-        do {
-            let stored = try encryptedStore.load([StoredConversationMessage].self, from: relativePath) ?? []
-            return stored
-                .map {
-                    Message(
-                        id: $0.id,
-                        text: $0.text,
-                        isIncoming: $0.isIncoming,
-                        timestamp: $0.timestamp,
-                        status: $0.status
-                    )
-                }
-                .sorted { $0.timestamp < $1.timestamp }
-        } catch {
-            return []
-        }
+        loadMessagesIncludingHidden(for: conversationID, currentUserID: currentUserID)
+            .filter { $0.visibility == .visible }
     }
 
     func saveMessages(_ messages: [Message], for conversationID: UUID, currentUserID: String) {
@@ -53,7 +38,8 @@ final class LocalMessageStore {
                 text: $0.text,
                 isIncoming: $0.isIncoming,
                 timestamp: $0.timestamp,
-                status: $0.status
+                status: $0.status,
+                visibility: $0.visibility
             )
         }
 
@@ -72,7 +58,7 @@ final class LocalMessageStore {
         for conversationID: UUID,
         currentUserID: String
     ) -> [Message] {
-        var existing = loadMessages(for: conversationID, currentUserID: currentUserID)
+        var existing = loadMessagesIncludingHidden(for: conversationID, currentUserID: currentUserID)
 
         for newMessage in newMessages {
             guard !existing.contains(where: { $0.id == newMessage.id }) else { continue }
@@ -81,7 +67,7 @@ final class LocalMessageStore {
 
         existing.sort { $0.timestamp < $1.timestamp }
         saveMessages(existing, for: conversationID, currentUserID: currentUserID)
-        return existing
+        return existing.filter { $0.visibility == .visible }
     }
 
     func appendMessage(
@@ -89,11 +75,11 @@ final class LocalMessageStore {
         for conversationID: UUID,
         currentUserID: String
     ) -> [Message] {
-        var existing = loadMessages(for: conversationID, currentUserID: currentUserID)
+        var existing = loadMessagesIncludingHidden(for: conversationID, currentUserID: currentUserID)
         existing.append(message)
         existing.sort { $0.timestamp < $1.timestamp }
         saveMessages(existing, for: conversationID, currentUserID: currentUserID)
-        return existing
+        return existing.filter { $0.visibility == .visible }
     }
 
     func replaceMessage(
@@ -101,7 +87,7 @@ final class LocalMessageStore {
         for conversationID: UUID,
         currentUserID: String
     ) -> [Message] {
-        var existing = loadMessages(for: conversationID, currentUserID: currentUserID)
+        var existing = loadMessagesIncludingHidden(for: conversationID, currentUserID: currentUserID)
 
         if let index = existing.firstIndex(where: { $0.id == message.id }) {
             existing[index] = message
@@ -111,7 +97,65 @@ final class LocalMessageStore {
 
         existing.sort { $0.timestamp < $1.timestamp }
         saveMessages(existing, for: conversationID, currentUserID: currentUserID)
-        return existing
+        return existing.filter { $0.visibility == .visible }
+    }
+
+    func hideMessage(
+        _ id: UUID,
+        for conversationID: UUID,
+        currentUserID: String
+    ) -> [Message] {
+        var existing = loadMessagesIncludingHidden(for: conversationID, currentUserID: currentUserID)
+
+        if let index = existing.firstIndex(where: { $0.id == id }) {
+            let old = existing[index]
+            existing[index] = Message(
+                id: old.id,
+                text: old.text,
+                isIncoming: old.isIncoming,
+                timestamp: old.timestamp,
+                status: old.status,
+                visibility: .hidden
+            )
+        }
+
+        existing.sort { $0.timestamp < $1.timestamp }
+        saveMessages(existing, for: conversationID, currentUserID: currentUserID)
+        return existing.filter { $0.visibility == .visible }
+    }
+
+    func deleteMessage(
+        _ id: UUID,
+        for conversationID: UUID,
+        currentUserID: String
+    ) -> [Message] {
+        var existing = loadMessagesIncludingHidden(for: conversationID, currentUserID: currentUserID)
+        existing.removeAll { $0.id == id }
+        existing.sort { $0.timestamp < $1.timestamp }
+        saveMessages(existing, for: conversationID, currentUserID: currentUserID)
+        return existing.filter { $0.visibility == .visible }
+    }
+
+    private func loadMessagesIncludingHidden(for conversationID: UUID, currentUserID: String) -> [Message] {
+        let relativePath = storagePath(for: conversationID, currentUserID: currentUserID)
+
+        do {
+            let stored = try encryptedStore.load([StoredConversationMessage].self, from: relativePath) ?? []
+            return stored
+                .map {
+                    Message(
+                        id: $0.id,
+                        text: $0.text,
+                        isIncoming: $0.isIncoming,
+                        timestamp: $0.timestamp,
+                        status: $0.status,
+                        visibility: $0.visibility
+                    )
+                }
+                .sorted { $0.timestamp < $1.timestamp }
+        } catch {
+            return []
+        }
     }
 
     private func storagePath(for conversationID: UUID, currentUserID: String) -> String {

@@ -27,6 +27,7 @@ enum Endpoint {
     case sendMessage
     case inbox
     case ackMessage
+    case deleteMessage
     case myOPKCount
 
     var path: String {
@@ -62,6 +63,8 @@ enum Endpoint {
             return "/messages/inbox"
         case .ackMessage:
             return "/messages/ack"
+        case .deleteMessage:
+            return "/messages/delete"
         case .myOPKCount:
             return "/keys/me/opk-count"
         }

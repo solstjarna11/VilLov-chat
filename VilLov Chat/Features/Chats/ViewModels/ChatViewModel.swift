@@ -61,13 +61,15 @@ final class ChatViewModel {
         guard canSendMessage else { return }
 
         let outgoingText = trimmedMessageText
+        let messageID = UUID()
 
         let optimisticMessage = Message(
-            id: UUID(),
+            id: messageID,
             text: outgoingText,
             isIncoming: false,
             timestamp: Date(),
-            status: .sending
+            status: .sending,
+            visibility: .visible
         )
 
         messages = localMessageStore.appendMessage(
@@ -83,7 +85,7 @@ final class ChatViewModel {
             let conversationService,
             let recipientUserID = conversation.recipientUserID
         else {
-            markMessageAsSent(optimisticMessage.id)
+            markMessageAsSent(messageID)
             return
         }
 
@@ -93,17 +95,18 @@ final class ChatViewModel {
             do {
                 try await conversationService.sendMessage(
                     plaintext: outgoingText,
+                    messageID: messageID,
                     to: recipientUserID,
                     conversationID: conversation.id
                 )
 
                 await MainActor.run {
-                    self.markMessageAsSent(optimisticMessage.id)
+                    self.markMessageAsSent(messageID)
                     self.isSending = false
                 }
             } catch {
                 await MainActor.run {
-                    self.markMessageAsFailed(optimisticMessage.id)
+                    self.markMessageAsFailed(messageID)
                     self.errorMessage = error.localizedDescription
                     self.isSending = false
                 }
@@ -143,6 +146,47 @@ final class ChatViewModel {
         }
     }
 
+    func hideMessage(_ id: UUID) {
+        messages = localMessageStore.hideMessage(
+            id,
+            for: conversation.id,
+            currentUserID: currentUserID
+        )
+    }
+
+    func deleteMessage(_ id: UUID) {
+        messages = localMessageStore.deleteMessage(
+            id,
+            for: conversation.id,
+            currentUserID: currentUserID
+        )
+    }
+
+    func deleteOutgoingUndeliveredMessage(_ id: UUID) {
+        guard let conversationService else {
+            deleteMessage(id)
+            return
+        }
+
+        Task {
+            do {
+                try await conversationService.deleteUndeliveredMessage(id)
+
+                await MainActor.run {
+                    self.messages = self.localMessageStore.deleteMessage(
+                        id,
+                        for: self.conversation.id,
+                        currentUserID: self.currentUserID
+                    )
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+
     private func mergeInboxMessages(_ inboxMessages: [DecryptedEnvelopeMessage]) {
         let matchingConversationMessages = inboxMessages.filter {
             $0.conversationID == conversation.id
@@ -154,7 +198,8 @@ final class ChatViewModel {
                 text: decrypted.plaintext,
                 isIncoming: true,
                 timestamp: decrypted.createdAt,
-                status: .sent
+                status: .sent,
+                visibility: .visible
             )
         }
 
@@ -176,7 +221,8 @@ final class ChatViewModel {
                 text: failedDecryptPlaceholderText,
                 isIncoming: true,
                 timestamp: failure.createdAt,
-                status: .failed
+                status: .failed,
+                visibility: .visible
             )
         }
 
@@ -196,7 +242,8 @@ final class ChatViewModel {
             text: old.text,
             isIncoming: old.isIncoming,
             timestamp: old.timestamp,
-            status: .sent
+            status: .sent,
+            visibility: old.visibility
         )
 
         messages[index] = updated
@@ -216,7 +263,8 @@ final class ChatViewModel {
             text: old.text,
             isIncoming: old.isIncoming,
             timestamp: old.timestamp,
-            status: .failed
+            status: .failed,
+            visibility: old.visibility
         )
 
         messages[index] = updated

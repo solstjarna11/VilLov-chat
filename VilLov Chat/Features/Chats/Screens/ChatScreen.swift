@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 25.3.2026.
 //
 
-
 import SwiftUI
 import Observation
 
@@ -52,6 +51,21 @@ struct ChatScreen: View {
                                 isGroupedWithPrevious: previous?.isIncoming == message.isIncoming
                             )
                             .id(message.id)
+                            .contextMenu {
+                                Button("Hide") {
+                                    viewModel.hideMessage(message.id)
+                                }
+
+                                Button("Delete for Me", role: .destructive) {
+                                    viewModel.deleteMessage(message.id)
+                                }
+
+                                if !message.isIncoming && (message.status == .sending || message.status == .sent) {
+                                    Button("Cancel Undelivered", role: .destructive) {
+                                        viewModel.deleteOutgoingUndeliveredMessage(message.id)
+                                    }
+                                }
+                            }
                         }
                     }
                     .padding()

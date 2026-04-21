@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 26.3.2026.
 //
 
-
 import Foundation
 
 struct SendCiphertextRequest: Codable, Equatable {
@@ -15,9 +14,19 @@ struct SendCiphertextRequest: Codable, Equatable {
     let ciphertext: String
     let header: String
     let sentAt: Date
+    let expiresAt: Date?
 }
 
 struct MessageAckRequest: Codable, Equatable {
+    let messageID: UUID
+}
+
+struct MessageDeleteRequest: Codable, Equatable {
+    let messageID: UUID
+}
+
+struct MessageDeleteResponse: Codable, Equatable {
+    let deleted: Bool
     let messageID: UUID
 }
 
@@ -29,4 +38,5 @@ struct CiphertextEnvelope: Codable, Identifiable, Equatable {
     let ciphertext: String
     let header: String
     let createdAt: Date
+    let expiresAt: Date?
 }

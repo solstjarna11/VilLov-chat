@@ -31,6 +31,7 @@ final class ConversationService: ConversationServicing {
 
     func sendMessage(
         plaintext: String,
+        messageID: UUID,
         to recipientUserID: String,
         conversationID: UUID
     ) async throws {
@@ -49,11 +50,12 @@ final class ConversationService: ConversationServicing {
 
         let request = SendCiphertextRequest(
             recipientUserID: recipientUserID,
-            messageID: UUID(),
+            messageID: messageID,
             conversationID: conversationID,
             ciphertext: encrypted.ciphertext,
             header: encrypted.header,
-            sentAt: Date()
+            sentAt: Date(),
+            expiresAt: nil
         )
 
         try await relayService.send(request)
@@ -145,6 +147,10 @@ final class ConversationService: ConversationServicing {
             body: request
         )
         return response.conversationID
+    }
+
+    func deleteUndeliveredMessage(_ messageID: UUID) async throws {
+        try await relayService.delete(messageID: messageID)
     }
 
     private func classifyInboxFailure(_ error: Error) -> String {

@@ -5,7 +5,6 @@
 //  Created by Lovísa Sól on 26.3.2026.
 //
 
-
 import Foundation
 
 struct InboxRefreshResult {
@@ -25,6 +24,7 @@ struct InboxMessageFailure: Identifiable, Equatable {
 protocol ConversationServicing {
     func sendMessage(
         plaintext: String,
+        messageID: UUID,
         to recipientUserID: String,
         conversationID: UUID
     ) async throws
@@ -34,4 +34,6 @@ protocol ConversationServicing {
     func fetchInboxResilient() async throws -> InboxRefreshResult
 
     func getOrCreateConversation(with recipientUserID: String) async throws -> UUID
+
+    func deleteUndeliveredMessage(_ messageID: UUID) async throws
 }
