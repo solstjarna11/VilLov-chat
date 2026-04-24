@@ -89,7 +89,7 @@ Existing sessions may continue, but new sessions will reflect the change.
 ### Secure Storage
 
 - AES-GCM encrypted storage  
-- Master key stored in iOS Keychain  
+- 256-bit Keychain-backed master key
 
 ### Data Stored Locally
 
